@@ -72,7 +72,7 @@ export const sku_version = pgTable("sku_version", {
   version_name: varchar("version_name", { length: 255 }),
 });
 
-// SKU version pricing table
+// SKU version pricing table (enhanced)
 export const sku_version_pricing = pgTable("sku_version_pricing", {
   sku_version_pricing_id: serial("sku_version_pricing_id").primaryKey(),
   sku_version_detail_id: integer("sku_version_detail_id"),
@@ -85,6 +85,18 @@ export const sku_version_pricing = pgTable("sku_version_pricing", {
   promotional_price: decimal("promotional_price", { precision: 10, scale: 2 }),
   discount_percentage: decimal("discount_percentage", { precision: 3, scale: 2 }),
   recognition_period_months: integer("recognition_period_months"),
+  // Enhanced pricing fields from PDF
+  revenue_allocation_method: varchar("revenue_allocation_method", { length: 64 }),
+  discount_eligibility: varchar("discount_eligibility", { length: 64 }),
+  discount_type: varchar("discount_type", { length: 64 }),
+  additional_certificate_price: decimal("additional_certificate_price", { precision: 10, scale: 2 }),
+  recognition_start_trigger: varchar("recognition_start_trigger", { length: 64 }),
+  deferred_revenue_account: varchar("deferred_revenue_account", { length: 64 }),
+  income_account: varchar("income_account", { length: 64 }),
+  profit_center: varchar("profit_center", { length: 64 }),
+  revenue_category: varchar("revenue_category", { length: 64 }),
+  revenue_subcategory: varchar("revenue_subcategory", { length: 64 }),
+  revenue_forecast_category: varchar("revenue_forecast_category", { length: 64 }),
 });
 
 // Offering product table (links offerings to SKU versions)
@@ -126,6 +138,86 @@ export const sku_version_state = pgTable("sku_version_state", {
   sku_version_state_id: bigint("sku_version_state_id", { mode: "number" }).primaryKey(),
   sku_version_id: integer("sku_version_id"),
   state_id: smallint("state_id"),
+});
+
+// Product SKU table (core product information)
+export const product_sku = pgTable("product_sku", {
+  sku: varchar("sku", { length: 255 }).primaryKey(),
+  active: boolean("active").default(true),
+  create_date: timestamp("create_date").defaultNow(),
+  name: varchar("name", { length: 255 }),
+});
+
+// SKU version detail table (enhanced version information)
+export const sku_version_detail = pgTable("sku_version_detail", {
+  sku_version_detail_id: serial("sku_version_detail_id").primaryKey(),
+  sku_version: integer("sku_version"),
+  version_name: varchar("version_name", { length: 128 }),
+  active: boolean("active").default(true),
+  qualifying_education: boolean("qualifying_education").default(false),
+  continuing_education: boolean("continuing_education").default(false),
+  description_short: varchar("description_short", { length: 256 }),
+  description_long: text("description_long"),
+  not_for_individual_sale: boolean("not_for_individual_sale").default(false),
+  credit_hours: integer("credit_hours"),
+  access_period: varchar("access_period", { length: 128 }),
+  platform: varchar("platform", { length: 128 }),
+  hybrid_delivery: boolean("hybrid_delivery").default(false),
+  certifications_awarded: varchar("certifications_awarded", { length: 256 }),
+  owner: varchar("owner", { length: 128 }),
+});
+
+// Product features lookup
+export const product_features = pgTable("product_features", {
+  product_feature_id: serial("product_feature_id").primaryKey(),
+  feature_name: varchar("feature_name", { length: 128 }),
+  feature_description: text("feature_description"),
+  active: boolean("active").default(true),
+});
+
+// SKU version features (many-to-many relationship)
+export const sku_version_features = pgTable("sku_version_features", {
+  sku_feature_id: bigint("sku_feature_id", { mode: "number" }).primaryKey(),
+  sku_version_detail_id: integer("sku_version_detail_id"),
+  feature_id: integer("feature_id"),
+  regulatory_modifier: boolean("regulatory_modifier").default(false),
+  pricing_modifier: boolean("pricing_modifier").default(false),
+});
+
+// Language lookup
+export const language_lookup = pgTable("language_lookup", {
+  language_id: smallint("language_id").primaryKey(),
+  language_name: varchar("language_name", { length: 64 }),
+  language_abbr: varchar("language_abbr", { length: 4 }),
+});
+
+// SKU version content
+export const sku_version_content = pgTable("sku_version_content", {
+  sku_version_content_id: serial("sku_version_content_id").primaryKey(),
+  sku_version_detail_id: integer("sku_version_detail_id"),
+  content_version: varchar("content_version", { length: 64 }),
+  content_format: varchar("content_format", { length: 64 }),
+  mobile_compatible: boolean("mobile_compatible").default(false),
+  description_short: varchar("description_short", { length: 256 }),
+  description_long: text("description_long"),
+  content_length: varchar("content_length", { length: 64 }),
+  instructor_information: varchar("instructor_information", { length: 256 }),
+  refresh_date: timestamp("refresh_date"),
+  create_date: timestamp("create_date").defaultNow(),
+});
+
+// Content language (multi-language support)
+export const content_language = pgTable("content_language", {
+  content_language_id: serial("content_language_id").primaryKey(),
+  sku_version_content_id: integer("sku_version_content_id"),
+  language_id: smallint("language_id"),
+});
+
+// SKU version fulfillment platform
+export const sku_version_fulfillment_platform = pgTable("sku_version_fulfillment_platform", {
+  sku_fulfillment_platform_id: bigint("sku_fulfillment_platform_id", { mode: "number" }).primaryKey(),
+  sku_version_id: integer("sku_version_id"),
+  fulfillment_platform_id: integer("fulfillment_platform_id"),
 });
 
 // Relations
@@ -181,6 +273,75 @@ export const sku_versionRelations = relations(sku_version, ({ many, one }) => ({
     references: [sku_version_pricing.sku_version_detail_id],
   }),
   sku_version_states: many(sku_version_state),
+  sku_version_detail: one(sku_version_detail, {
+    fields: [sku_version.sku_version_id],
+    references: [sku_version_detail.sku_version],
+  }),
+  sku_version_fulfillment_platforms: many(sku_version_fulfillment_platform),
+}));
+
+// Additional relations for new tables
+export const product_skuRelations = relations(product_sku, ({ many }) => ({
+  offerings: many(offering),
+}));
+
+export const sku_version_detailRelations = relations(sku_version_detail, ({ one, many }) => ({
+  sku_version: one(sku_version, {
+    fields: [sku_version_detail.sku_version],
+    references: [sku_version.sku_version_id],
+  }),
+  sku_version_features: many(sku_version_features),
+  sku_version_contents: many(sku_version_content),
+  sku_version_pricing: many(sku_version_pricing),
+}));
+
+export const product_featuresRelations = relations(product_features, ({ many }) => ({
+  sku_version_features: many(sku_version_features),
+}));
+
+export const sku_version_featuresRelations = relations(sku_version_features, ({ one }) => ({
+  sku_version_detail: one(sku_version_detail, {
+    fields: [sku_version_features.sku_version_detail_id],
+    references: [sku_version_detail.sku_version_detail_id],
+  }),
+  feature: one(product_features, {
+    fields: [sku_version_features.feature_id],
+    references: [product_features.product_feature_id],
+  }),
+}));
+
+export const language_lookupRelations = relations(language_lookup, ({ many }) => ({
+  content_languages: many(content_language),
+}));
+
+export const sku_version_contentRelations = relations(sku_version_content, ({ one, many }) => ({
+  sku_version_detail: one(sku_version_detail, {
+    fields: [sku_version_content.sku_version_detail_id],
+    references: [sku_version_detail.sku_version_detail_id],
+  }),
+  content_languages: many(content_language),
+}));
+
+export const content_languageRelations = relations(content_language, ({ one }) => ({
+  sku_version_content: one(sku_version_content, {
+    fields: [content_language.sku_version_content_id],
+    references: [sku_version_content.sku_version_content_id],
+  }),
+  language: one(language_lookup, {
+    fields: [content_language.language_id],
+    references: [language_lookup.language_id],
+  }),
+}));
+
+export const sku_version_fulfillment_platformRelations = relations(sku_version_fulfillment_platform, ({ one }) => ({
+  sku_version: one(sku_version, {
+    fields: [sku_version_fulfillment_platform.sku_version_id],
+    references: [sku_version.sku_version_id],
+  }),
+  fulfillment_platform: one(fulfillment_platform, {
+    fields: [sku_version_fulfillment_platform.fulfillment_platform_id],
+    references: [fulfillment_platform.fulfillment_platform_id],
+  }),
 }));
 
 export const sku_version_pricingRelations = relations(sku_version_pricing, ({ one }) => ({
