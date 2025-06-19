@@ -72,13 +72,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(search?: string, ecosystem_id?: number, brand_id?: number): Promise<ProductWithRelations[]> {
+    // Build where conditions
+    let whereConditions = [];
+    
+    if (search) {
+      whereConditions.push(or(
+        ilike(offering.name, `%${search}%`),
+        ilike(offering.sku, `%${search}%`),
+        ilike(offering.description_short, `%${search}%`)
+      ));
+    }
+    
+    if (brand_id && brand_id > 0) {
+      whereConditions.push(eq(offering_brand.brand_id, brand_id));
+    }
+    
+    if (ecosystem_id && ecosystem_id > 0) {
+      whereConditions.push(eq(brand_lookup.ecosystem_id, ecosystem_id));
+    }
+
     // Get basic offering data with brands
-    const offerings = await db
+    let query = db
       .select()
       .from(offering)
       .leftJoin(offering_brand, eq(offering.offering_id, offering_brand.offering_id))
       .leftJoin(brand_lookup, eq(offering_brand.brand_id, brand_lookup.id))
       .leftJoin(offering_product, eq(offering.offering_id, offering_product.offering_id));
+      
+    if (whereConditions.length > 0) {
+      query = query.where(and(...whereConditions));
+    }
+    
+    const offerings = await query;
 
     const resultMap = new Map<string, ProductWithRelations>();
 

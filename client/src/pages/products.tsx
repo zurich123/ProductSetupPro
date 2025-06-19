@@ -16,19 +16,36 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [selectedEcosystem, setSelectedEcosystem] = useState<string>("");
   const [selectedBrand, setSelectedBrand] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
-  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } = useQuery<ProductWithRelations[]>({
+  const { data: allProducts = [], isLoading: productsLoading, refetch: refetchProducts } = useQuery<ProductWithRelations[]>({
     queryKey: ["/api/products", search, selectedEcosystem, selectedBrand],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append("search", search);
-      if (selectedEcosystem) params.append("ecosystem_id", selectedEcosystem);
-      if (selectedBrand) params.append("brand_id", selectedBrand);
+      if (selectedEcosystem && selectedEcosystem !== "0") params.append("ecosystem_id", selectedEcosystem);
+      if (selectedBrand && selectedBrand !== "0") params.append("brand_id", selectedBrand);
       
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error("Failed to fetch products");
       return response.json();
     },
+  });
+
+  // Client-side status filtering since it's based on boolean combinations
+  const products = allProducts.filter(product => {
+    if (!selectedStatus || selectedStatus === "") return true;
+    
+    const isActive = product.active && !product.not_for_sale;
+    const isInactive = !product.active && product.not_for_sale;
+    const isDraft = !product.active && !product.not_for_sale;
+    
+    switch (selectedStatus) {
+      case "active": return isActive;
+      case "inactive": return isInactive; 
+      case "draft": return isDraft;
+      default: return true;
+    }
   });
 
   const { data: brands = [] } = useQuery<BrandLookup[]>({
@@ -120,12 +137,12 @@ export default function Products() {
               </SelectContent>
             </Select>
 
-            <Select>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger>
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
