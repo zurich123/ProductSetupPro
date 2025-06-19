@@ -39,12 +39,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const productData = productFormSchema.parse(req.body);
       
-      // Auto-derive ecosystem from brand if not provided
-      if (!productData.ecosystem_id && productData.brand_id) {
+      // Auto-derive ecosystem from brand
+      if (productData.brand_id) {
         const brands = await storage.getBrands();
         const selectedBrand = brands.find(b => b.id === productData.brand_id);
         if (selectedBrand?.ecosystem_id) {
           productData.ecosystem_id = selectedBrand.ecosystem_id;
+        } else {
+          // Default to first ecosystem if brand doesn't have one
+          const ecosystems = await storage.getEcosystems();
+          if (ecosystems.length > 0) {
+            productData.ecosystem_id = ecosystems[0].ecosystem_id;
+          }
         }
       }
       

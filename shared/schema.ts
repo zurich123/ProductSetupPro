@@ -370,7 +370,7 @@ export const productFormSchema = z.object({
   // Basic product information
   name: z.string().min(1, "Product name is required"),
   sku: z.string().min(1, "SKU is required"),
-  ecosystem_id: z.number().min(1, "Ecosystem is required"),
+  ecosystem_id: z.number().min(1, "Ecosystem is required").optional(),
   brand_id: z.number().min(1, "Brand is required"),
   description_short: z.string().optional(),
   description_long: z.string().optional(),
