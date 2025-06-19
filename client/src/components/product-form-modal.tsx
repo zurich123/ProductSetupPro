@@ -69,21 +69,21 @@ export function ProductFormModal({
       qualifying_education: false,
       continuing_education: false,
       not_for_individual_sale: false,
-      credit_hours: 0,
+      credit_hours: undefined,
       access_period: "",
       platform: "",
       hybrid_delivery: false,
       certifications_awarded: "",
       owner: "",
-      base_price: 0,
-      msrp: 0,
-      cogs: 0,
-      delivery_cost: 0,
-      subscription_price: 0,
-      promotional_price: 0,
-      discount_percentage: 0,
-      recognition_period_months: 0,
-      additional_certificate_price: 0,
+      base_price: undefined,
+      msrp: undefined,
+      cogs: undefined,
+      delivery_cost: undefined,
+      subscription_price: undefined,
+      promotional_price: undefined,
+      discount_percentage: undefined,
+      recognition_period_months: undefined,
+      additional_certificate_price: undefined,
       revenue_allocation_method: "",
       discount_eligibility: "",
       discount_type: "",
@@ -575,8 +575,12 @@ export function ProductFormModal({
                                 type="number" 
                                 step="0.01" 
                                 min="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  field.onChange(value === "" ? undefined : parseFloat(value));
+                                }}
+                                placeholder="0.00"
                               />
                             </FormControl>
                             <FormMessage />
@@ -595,8 +599,12 @@ export function ProductFormModal({
                                 type="number" 
                                 step="0.01" 
                                 min="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  field.onChange(value === "" ? undefined : parseFloat(value));
+                                }}
+                                placeholder="0.00"
                               />
                             </FormControl>
                             <FormMessage />
