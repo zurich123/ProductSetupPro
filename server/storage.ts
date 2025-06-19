@@ -112,7 +112,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get SKU versions with details for each product
-    for (const productId of resultMap.keys()) {
+    for (const productId of Array.from(resultMap.keys())) {
       const product = resultMap.get(productId)!;
       const versions = await db
         .select()
@@ -162,11 +162,6 @@ export class DatabaseStorage implements IStorage {
     }
 
     return Array.from(resultMap.values());
-
-    const results = await query;
-    
-    // Group by offering_id and transform to ProductWithRelations
-    const productsMap = new Map<string, ProductWithRelations>();
     
     for (const row of results) {
       const product = row.offering;
@@ -357,13 +352,30 @@ export class DatabaseStorage implements IStorage {
           brand_id: productData.brand_id,
         });
 
-      // Return the created product with relations
-      const createdProduct = await this.getProductById(newOffering.offering_id);
-      if (!createdProduct) {
-        throw new Error("Failed to retrieve created product");
-      }
-      
-      return createdProduct;
+      // Return the created product by constructing it directly
+      return {
+        ...newOffering,
+        offering_brands: [{
+          id: 0,
+          offering_id: newOffering.offering_id,
+          brand_id: productData.brand_id,
+          brand: null,
+        }],
+        offering_products: [{
+          offering_id: newOffering.offering_id,
+          sku_version: newSkuVersion.sku_version_id,
+        }],
+        sku_versions: [{
+          ...newSkuVersion,
+          sku_version_detail: {
+            ...newSkuVersionDetail,
+            sku_version_pricing: [],
+            sku_version_features: [],
+            sku_version_contents: [],
+          },
+          sku_version_fulfillment_platforms: [],
+        }],
+      };
     });
   }
 
