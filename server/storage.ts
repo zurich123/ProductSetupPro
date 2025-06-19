@@ -162,69 +162,6 @@ export class DatabaseStorage implements IStorage {
     }
 
     return Array.from(resultMap.values());
-    
-    for (const row of results) {
-      const product = row.offering;
-      if (!product) continue;
-      
-      if (!productsMap.has(product.offering_id)) {
-        productsMap.set(product.offering_id, {
-          ...product,
-          offering_brands: [],
-          offering_products: [],
-          sku_versions: []
-        });
-      }
-      
-      const productWithRelations = productsMap.get(product.offering_id)!;
-      
-      // Add brand relation if exists and not already added
-      if (row.offering_brand && row.brand_lookup) {
-        const existingBrand = productWithRelations.offering_brands.find(
-          b => b.brand_id === row.offering_brand!.brand_id
-        );
-        if (!existingBrand) {
-          productWithRelations.offering_brands.push({
-            ...row.offering_brand,
-            brand: row.brand_lookup
-          });
-        }
-      }
-      
-      // Add product relation if exists and not already added
-      if (row.offering_product) {
-        const existingProduct = productWithRelations.offering_products.find(
-          p => p.sku_version === row.offering_product!.sku_version
-        );
-        if (!existingProduct) {
-          productWithRelations.offering_products.push({
-            offering_id: row.offering_product.offering_id,
-            sku_version: row.offering_product.sku_version
-          });
-        }
-      }
-
-      // Add SKU version relation if exists and not already added
-      if (row.sku_version) {
-        const existingVersion = productWithRelations.sku_versions.find(
-          v => v.sku_version_id === row.sku_version!.sku_version_id
-        );
-        if (!existingVersion) {
-          productWithRelations.sku_versions.push({
-            ...row.sku_version,
-            sku_version_detail: row.sku_version_detail ? {
-              ...row.sku_version_detail,
-              sku_version_pricing: row.sku_version_pricing ? [row.sku_version_pricing] : [],
-              sku_version_features: [],
-              sku_version_contents: [],
-            } : null,
-            sku_version_fulfillment_platforms: [],
-          });
-        }
-      }
-    }
-    
-    return Array.from(productsMap.values());
   }
 
   async getProductById(id: string): Promise<ProductWithRelations | undefined> {
