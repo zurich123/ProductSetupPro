@@ -110,11 +110,7 @@ export class DatabaseStorage implements IStorage {
         if (!existingProduct) {
           productWithRelations.offering_products.push({
             offering_id: row.offering_product.offering_id,
-            sku_version: row.offering_product.sku_version,
-            sku_version: row.sku_version ? {
-              ...row.sku_version,
-              sku_version_pricing: row.sku_version_pricing
-            } : null
+            sku_version: row.offering_product.sku_version
           });
         }
       }
@@ -211,7 +207,7 @@ export class DatabaseStorage implements IStorage {
 
       // Update SKU if there's one linked
       if (existingProduct.offering_products.length > 0) {
-        const skuVersionId = existingProduct.offering_products[0].sku_version?.sku_version_id;
+        const skuVersionId = existingProduct.offering_products[0].sku_version;
         if (skuVersionId) {
           await tx
             .update(sku_version)
@@ -233,7 +229,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Update brand relationship
-      if (existingProduct.offering_brands.length > 0) {
+      if (existingProduct && existingProduct.offering_brands.length > 0) {
         await tx
           .update(offering_brand)
           .set({
@@ -264,10 +260,10 @@ export class DatabaseStorage implements IStorage {
       
       // Delete SKU version pricing
       for (const offeringProduct of product.offering_products) {
-        if (offeringProduct.sku_version?.sku_version_id) {
+        if (offeringProduct.sku_version) {
           await tx
             .delete(sku_version_pricing)
-            .where(eq(sku_version_pricing.sku_version_detail_id, offeringProduct.sku_version.sku_version_id));
+            .where(eq(sku_version_pricing.sku_version_detail_id, offeringProduct.sku_version));
         }
       }
 
@@ -278,10 +274,10 @@ export class DatabaseStorage implements IStorage {
 
       // Delete SKU versions
       for (const offeringProduct of product.offering_products) {
-        if (offeringProduct.sku_version?.sku_version_id) {
+        if (offeringProduct.sku_version) {
           await tx
             .delete(sku_version)
-            .where(eq(sku_version.sku_version_id, offeringProduct.sku_version.sku_version_id));
+            .where(eq(sku_version.sku_version_id, offeringProduct.sku_version));
         }
       }
 
@@ -304,8 +300,17 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get the original product data to create a clone
-    const originalSku = originalProduct.offering_products[0]?.sku_version?.sku;
-    const originalPricing = originalProduct.offering_products[0]?.sku_version?.sku_version_pricing;
+    const skuVersionId = originalProduct.offering_products[0]?.sku_version;
+    let originalSku = "";
+    let originalPricing: any = null;
+    
+    if (skuVersionId) {
+      const [skuData] = await db.select().from(sku_version).where(eq(sku_version.sku_version_id, skuVersionId));
+      const [pricingData] = await db.select().from(sku_version_pricing).where(eq(sku_version_pricing.sku_version_detail_id, skuVersionId));
+      originalSku = skuData?.sku || "";
+      originalPricing = pricingData;
+    }
+    
     const originalBrand = originalProduct.offering_brands[0]?.brand_id;
 
     const cloneData: ProductFormData = {

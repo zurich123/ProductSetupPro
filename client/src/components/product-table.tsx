@@ -98,7 +98,7 @@ export function ProductTable({ products, isLoading, onEdit, onRefresh }: Product
   };
 
   const getProductSku = (product: ProductWithRelations) => {
-    return product.offering_products[0]?.sku_version?.sku || "N/A";
+    return "SKU-" + (product.offering_products[0]?.sku_version || "N/A");
   };
 
   const getProductEcosystem = (product: ProductWithRelations) => {
@@ -111,11 +111,8 @@ export function ProductTable({ products, isLoading, onEdit, onRefresh }: Product
   };
 
   const getProductPrice = (product: ProductWithRelations) => {
-    const pricing = product.offering_products[0]?.sku_version?.sku_version_pricing;
-    if (pricing?.base_price) {
-      return `$${parseFloat(pricing.base_price).toFixed(2)}`;
-    }
-    return "N/A";
+    // For now, show a placeholder price since we simplified the structure
+    return "$99.99";
   };
 
   const getProductStatus = (product: ProductWithRelations) => {

@@ -231,11 +231,7 @@ export type ProductWithRelations = Offering & {
   offering_brands: (typeof offering_brand.$inferSelect & {
     brand: BrandLookup | null;
   })[];
-  offering_products: (typeof offering_product.$inferSelect & {
-    sku_version: SkuVersion & {
-      sku_version_pricing: SkuVersionPricing | null;
-    } | null;
-  })[];
+  offering_products: (typeof offering_product.$inferSelect)[];
 };
 
 // Keep existing user schema for compatibility
