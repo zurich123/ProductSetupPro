@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { productFormSchema, type ProductFormData, type ProductWithRelations, type BrandLookup, type Ecosystem } from "@shared/schema";
+import { productFormSchema, type ProductFormData, type ProductWithRelations, type BrandLookup, type Ecosystem, type FulfillmentPlatform, type ProductFeature } from "@shared/schema";
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -45,6 +45,15 @@ export function ProductFormModal({
   const { toast } = useToast();
   const isEditing = !!editingProduct;
 
+  // Fetch additional lookup data
+  const { data: fulfillmentPlatforms = [] } = useQuery<FulfillmentPlatform[]>({
+    queryKey: ["/api/fulfillment-platforms"],
+  });
+
+  const { data: productFeatures = [] } = useQuery<ProductFeature[]>({
+    queryKey: ["/api/product-features"],
+  });
+
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -54,10 +63,35 @@ export function ProductFormModal({
       brand_id: 0,
       description_short: "",
       description_long: "",
+      version_name: "Standard",
+      qualifying_education: false,
+      continuing_education: false,
+      not_for_individual_sale: false,
+      credit_hours: 0,
+      access_period: "",
+      platform: "",
+      hybrid_delivery: false,
+      certifications_awarded: "",
+      owner: "",
       base_price: 0,
       msrp: 0,
       cogs: 0,
-      fulfillment_platform_id: 0,
+      delivery_cost: 0,
+      subscription_price: 0,
+      promotional_price: 0,
+      discount_percentage: 0,
+      recognition_period_months: 0,
+      additional_certificate_price: 0,
+      revenue_allocation_method: "",
+      discount_eligibility: "",
+      discount_type: "",
+      recognition_start_trigger: "",
+      content_format: "",
+      mobile_compatible: false,
+      content_length: "",
+      instructor_information: "",
+      fulfillment_platform_ids: [],
+      feature_ids: [],
       sequence_order: 0,
       active: true,
       not_for_sale: false,
@@ -111,7 +145,8 @@ export function ProductFormModal({
       if (editingProduct) {
         // Populate form with existing product data
         const brandId = editingProduct.offering_brands[0]?.brand_id;
-        const pricing = editingProduct.sku_versions[0]?.sku_version_pricing;
+        const versionDetail = editingProduct.sku_versions[0]?.sku_version_detail;
+        const pricing = versionDetail?.sku_version_pricing[0];
 
         form.reset({
           name: editingProduct.name || "",
@@ -120,10 +155,35 @@ export function ProductFormModal({
           brand_id: brandId || 0,
           description_short: editingProduct.description_short || "",
           description_long: editingProduct.description_long || "",
+          version_name: versionDetail?.version_name || "Standard",
+          qualifying_education: versionDetail?.qualifying_education || false,
+          continuing_education: versionDetail?.continuing_education || false,
+          not_for_individual_sale: versionDetail?.not_for_individual_sale || false,
+          credit_hours: versionDetail?.credit_hours || undefined,
+          access_period: versionDetail?.access_period || "",
+          platform: versionDetail?.platform || "",
+          hybrid_delivery: versionDetail?.hybrid_delivery || false,
+          certifications_awarded: versionDetail?.certifications_awarded || "",
+          owner: versionDetail?.owner || "",
           base_price: pricing?.base_price ? parseFloat(pricing.base_price) : 0,
           msrp: pricing?.msrp ? parseFloat(pricing.msrp) : undefined,
           cogs: pricing?.cogs ? parseFloat(pricing.cogs) : undefined,
-          fulfillment_platform_id: undefined,
+          delivery_cost: pricing?.delivery_cost ? parseFloat(pricing.delivery_cost) : undefined,
+          subscription_price: pricing?.subscription_price ? parseFloat(pricing.subscription_price) : undefined,
+          promotional_price: pricing?.promotional_price ? parseFloat(pricing.promotional_price) : undefined,
+          discount_percentage: pricing?.discount_percentage ? parseFloat(pricing.discount_percentage) : undefined,
+          recognition_period_months: pricing?.recognition_period_months || undefined,
+          additional_certificate_price: pricing?.additional_certificate_price ? parseFloat(pricing.additional_certificate_price) : undefined,
+          revenue_allocation_method: pricing?.revenue_allocation_method || "",
+          discount_eligibility: pricing?.discount_eligibility || "",
+          discount_type: pricing?.discount_type || "",
+          recognition_start_trigger: pricing?.recognition_start_trigger || "",
+          content_format: versionDetail?.sku_version_contents[0]?.content_format || "",
+          mobile_compatible: versionDetail?.sku_version_contents[0]?.mobile_compatible || false,
+          content_length: versionDetail?.sku_version_contents[0]?.content_length || "",
+          instructor_information: versionDetail?.sku_version_contents[0]?.instructor_information || "",
+          fulfillment_platform_ids: editingProduct.sku_versions[0]?.sku_version_fulfillment_platforms?.map(fp => fp.fulfillment_platform.fulfillment_platform_id) || [],
+          feature_ids: versionDetail?.sku_version_features?.map(f => f.feature.product_feature_id) || [],
           sequence_order: editingProduct.sequence_order || undefined,
           active: editingProduct.active || false,
           not_for_sale: editingProduct.not_for_sale || false,

@@ -2,6 +2,13 @@ import {
   offering, 
   sku_version, 
   sku_version_pricing, 
+  sku_version_detail,
+  sku_version_content,
+  sku_version_features,
+  sku_version_fulfillment_platform,
+  product_features,
+  language_lookup,
+  content_language,
   offering_product, 
   offering_brand, 
   brand_lookup, 
@@ -14,6 +21,8 @@ import {
   type BrandLookup,
   type Ecosystem,
   type FulfillmentPlatform,
+  type ProductFeature,
+  type LanguageLookup,
   type User,
   type InsertUser,
   users
@@ -39,6 +48,8 @@ export interface IStorage {
   getBrands(): Promise<BrandLookup[]>;
   getEcosystems(): Promise<Ecosystem[]>;
   getFulfillmentPlatforms(): Promise<FulfillmentPlatform[]>;
+  getProductFeatures(): Promise<ProductFeature[]>;
+  getLanguages(): Promise<LanguageLookup[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -68,7 +79,15 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(brand_lookup, eq(offering_brand.brand_id, brand_lookup.id))
       .leftJoin(offering_product, eq(offering.offering_id, offering_product.offering_id))
       .leftJoin(sku_version, eq(offering.offering_id, sku_version.offering_id))
-      .leftJoin(sku_version_pricing, eq(sku_version.sku_version_id, sku_version_pricing.sku_version_detail_id));
+      .leftJoin(sku_version_detail, eq(sku_version.sku_version_id, sku_version_detail.sku_version))
+      .leftJoin(sku_version_pricing, eq(sku_version_detail.sku_version_detail_id, sku_version_pricing.sku_version_detail_id))
+      .leftJoin(sku_version_features, eq(sku_version_detail.sku_version_detail_id, sku_version_features.sku_version_detail_id))
+      .leftJoin(product_features, eq(sku_version_features.feature_id, product_features.product_feature_id))
+      .leftJoin(sku_version_fulfillment_platform, eq(sku_version.sku_version_id, sku_version_fulfillment_platform.sku_version_id))
+      .leftJoin(fulfillment_platform, eq(sku_version_fulfillment_platform.fulfillment_platform_id, fulfillment_platform.fulfillment_platform_id))
+      .leftJoin(sku_version_content, eq(sku_version_detail.sku_version_detail_id, sku_version_content.sku_version_detail_id))
+      .leftJoin(content_language, eq(sku_version_content.sku_version_content_id, content_language.sku_version_content_id))
+      .leftJoin(language_lookup, eq(content_language.language_id, language_lookup.language_id));
 
     const results = await query;
     
@@ -159,7 +178,28 @@ export class DatabaseStorage implements IStorage {
         .insert(sku_version)
         .values({
           offering_id: newOffering.offering_id,
-          version_name: `v1.0`
+          version_name: productData.version_name || "v1.0"
+        })
+        .returning();
+
+      // Create SKU version detail
+      const [newSkuVersionDetail] = await tx
+        .insert(sku_version_detail)
+        .values({
+          sku_version: newSkuVersion.sku_version_id,
+          version_name: productData.version_name || "v1.0",
+          active: true,
+          qualifying_education: productData.qualifying_education,
+          continuing_education: productData.continuing_education,
+          description_short: productData.description_short,
+          description_long: productData.description_long,
+          not_for_individual_sale: productData.not_for_individual_sale,
+          credit_hours: productData.credit_hours,
+          access_period: productData.access_period,
+          platform: productData.platform,
+          hybrid_delivery: productData.hybrid_delivery,
+          certifications_awarded: productData.certifications_awarded,
+          owner: productData.owner,
         })
         .returning();
 
@@ -167,11 +207,57 @@ export class DatabaseStorage implements IStorage {
       await tx
         .insert(sku_version_pricing)
         .values({
-          sku_version_detail_id: newSkuVersion.sku_version_id,
+          sku_version_detail_id: newSkuVersionDetail.sku_version_detail_id,
           base_price: productData.base_price.toString(),
           msrp: productData.msrp?.toString(),
           cogs: productData.cogs?.toString(),
+          delivery_cost: productData.delivery_cost?.toString(),
+          subscription_price: productData.subscription_price?.toString(),
+          promotional_price: productData.promotional_price?.toString(),
+          discount_percentage: productData.discount_percentage?.toString(),
+          recognition_period_months: productData.recognition_period_months,
+          additional_certificate_price: productData.additional_certificate_price?.toString(),
+          revenue_allocation_method: productData.revenue_allocation_method,
+          discount_eligibility: productData.discount_eligibility,
+          discount_type: productData.discount_type,
+          recognition_start_trigger: productData.recognition_start_trigger,
         });
+
+      // Create content if provided
+      if (productData.content_format || productData.instructor_information) {
+        const [newContent] = await tx
+          .insert(sku_version_content)
+          .values({
+            sku_version_detail_id: newSkuVersionDetail.sku_version_detail_id,
+            content_format: productData.content_format,
+            mobile_compatible: productData.mobile_compatible,
+            description_short: productData.description_short,
+            description_long: productData.description_long,
+            content_length: productData.content_length,
+            instructor_information: productData.instructor_information,
+          })
+          .returning();
+      }
+
+      // Link features
+      if (productData.feature_ids && productData.feature_ids.length > 0) {
+        const featureValues = productData.feature_ids.map(featureId => ({
+          sku_version_detail_id: newSkuVersionDetail.sku_version_detail_id,
+          feature_id: featureId,
+          regulatory_modifier: false,
+          pricing_modifier: false,
+        }));
+        await tx.insert(sku_version_features).values(featureValues);
+      }
+
+      // Link fulfillment platforms
+      if (productData.fulfillment_platform_ids && productData.fulfillment_platform_ids.length > 0) {
+        const fulfillmentValues = productData.fulfillment_platform_ids.map(platformId => ({
+          sku_version_id: newSkuVersion.sku_version_id,
+          fulfillment_platform_id: platformId,
+        }));
+        await tx.insert(sku_version_fulfillment_platform).values(fulfillmentValues);
+      }
 
       // Link offering to SKU version
       await tx
@@ -335,6 +421,14 @@ export class DatabaseStorage implements IStorage {
 
   async getFulfillmentPlatforms(): Promise<FulfillmentPlatform[]> {
     return await db.select().from(fulfillment_platform);
+  }
+
+  async getProductFeatures(): Promise<ProductFeature[]> {
+    return await db.select().from(product_features);
+  }
+
+  async getLanguages(): Promise<LanguageLookup[]> {
+    return await db.select().from(language_lookup);
   }
 }
 

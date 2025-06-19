@@ -364,29 +364,82 @@ export const insertEcosystemSchema = createInsertSchema(ecosystem);
 export const insertOfferingBrandSchema = createInsertSchema(offering_brand);
 export const insertFulfillmentPlatformSchema = createInsertSchema(fulfillment_platform);
 
-// Product form schema (combined data for creating products)
+// Enhanced product form schema with full business rules
 export const productFormSchema = z.object({
+  // Basic product information
   name: z.string().min(1, "Product name is required"),
   sku: z.string().min(1, "SKU is required"),
   ecosystem_id: z.number().min(1, "Ecosystem is required"),
   brand_id: z.number().min(1, "Brand is required"),
   description_short: z.string().optional(),
   description_long: z.string().optional(),
-  base_price: z.number().min(0, "Base price must be positive"),
-  msrp: z.number().min(0).optional(),
-  cogs: z.number().min(0).optional(),
-  fulfillment_platform_id: z.number().optional(),
   sequence_order: z.number().min(0).max(255).optional(),
   active: z.boolean().default(true),
   not_for_sale: z.boolean().default(false),
+  
+  // Version details
+  version_name: z.string().min(1, "Version name is required"),
+  qualifying_education: z.boolean().default(false),
+  continuing_education: z.boolean().default(false),
+  not_for_individual_sale: z.boolean().default(false),
+  credit_hours: z.number().min(0).optional(),
+  access_period: z.string().optional(),
+  platform: z.string().optional(),
+  hybrid_delivery: z.boolean().default(false),
+  certifications_awarded: z.string().optional(),
+  owner: z.string().optional(),
+  
+  // Pricing information
+  base_price: z.number().min(0, "Base price must be positive"),
+  msrp: z.number().min(0).optional(),
+  cogs: z.number().min(0).optional(),
+  delivery_cost: z.number().min(0).optional(),
+  subscription_price: z.number().min(0).optional(),
+  promotional_price: z.number().min(0).optional(),
+  discount_percentage: z.number().min(0).max(100).optional(),
+  recognition_period_months: z.number().min(0).optional(),
+  additional_certificate_price: z.number().min(0).optional(),
+  
+  // Advanced pricing
+  revenue_allocation_method: z.string().optional(),
+  discount_eligibility: z.string().optional(),
+  discount_type: z.string().optional(),
+  recognition_start_trigger: z.string().optional(),
+  
+  // Content information
+  content_format: z.string().optional(),
+  mobile_compatible: z.boolean().default(false),
+  content_length: z.string().optional(),
+  instructor_information: z.string().optional(),
+  
+  // Fulfillment
+  fulfillment_platform_ids: z.array(z.number()).default([]),
+  
+  // Features
+  feature_ids: z.array(z.number()).default([]),
 });
 
 // Version form schema for adding versions to existing products
 export const versionFormSchema = z.object({
   version_name: z.string().min(1, "Version name is required"),
+  qualifying_education: z.boolean().default(false),
+  continuing_education: z.boolean().default(false),
+  not_for_individual_sale: z.boolean().default(false),
+  credit_hours: z.number().min(0).optional(),
+  access_period: z.string().optional(),
+  platform: z.string().optional(),
+  hybrid_delivery: z.boolean().default(false),
+  certifications_awarded: z.string().optional(),
+  owner: z.string().optional(),
   base_price: z.number().min(0, "Base price must be positive"),
   msrp: z.number().min(0).optional(),
   cogs: z.number().min(0).optional(),
+  content_format: z.string().optional(),
+  mobile_compatible: z.boolean().default(false),
+  content_length: z.string().optional(),
+  instructor_information: z.string().optional(),
+  fulfillment_platform_ids: z.array(z.number()).default([]),
+  feature_ids: z.array(z.number()).default([]),
 });
 
 // Types
@@ -401,15 +454,32 @@ export type Ecosystem = typeof ecosystem.$inferSelect;
 export type FulfillmentPlatform = typeof fulfillment_platform.$inferSelect;
 export type ProductFormData = z.infer<typeof productFormSchema>;
 export type VersionFormData = z.infer<typeof versionFormSchema>;
+export type ProductFeature = typeof product_features.$inferSelect;
+export type LanguageLookup = typeof language_lookup.$inferSelect;
+export type SkuVersionDetail = typeof sku_version_detail.$inferSelect;
+export type SkuVersionContent = typeof sku_version_content.$inferSelect;
 
-// Product with relations type for display
+// Enhanced product with full relations
 export type ProductWithRelations = Offering & {
   offering_brands: (typeof offering_brand.$inferSelect & {
     brand: BrandLookup | null;
   })[];
   offering_products: (typeof offering_product.$inferSelect)[];
   sku_versions: (SkuVersion & {
-    sku_version_pricing: SkuVersionPricing | null;
+    sku_version_detail: (typeof sku_version_detail.$inferSelect & {
+      sku_version_pricing: SkuVersionPricing[];
+      sku_version_features: (typeof sku_version_features.$inferSelect & {
+        feature: typeof product_features.$inferSelect;
+      })[];
+      sku_version_contents: (typeof sku_version_content.$inferSelect & {
+        content_languages: (typeof content_language.$inferSelect & {
+          language: typeof language_lookup.$inferSelect;
+        })[];
+      })[];
+    }) | null;
+    sku_version_fulfillment_platforms: (typeof sku_version_fulfillment_platform.$inferSelect & {
+      fulfillment_platform: FulfillmentPlatform;
+    })[];
   })[];
 };
 

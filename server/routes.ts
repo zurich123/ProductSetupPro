@@ -123,6 +123,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/product-features", async (req, res) => {
+    try {
+      const features = await storage.getProductFeatures();
+      res.json(features);
+    } catch (error) {
+      console.error("Error fetching product features:", error);
+      res.status(500).json({ message: "Failed to fetch product features" });
+    }
+  });
+
+  app.get("/api/languages", async (req, res) => {
+    try {
+      const languages = await storage.getLanguages();
+      res.json(languages);
+    } catch (error) {
+      console.error("Error fetching languages:", error);
+      res.status(500).json({ message: "Failed to fetch languages" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
