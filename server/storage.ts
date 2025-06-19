@@ -83,7 +83,8 @@ export class DatabaseStorage implements IStorage {
         productsMap.set(product.offering_id, {
           ...product,
           offering_brands: [],
-          offering_products: []
+          offering_products: [],
+          sku_versions: []
         });
       }
       
@@ -103,7 +104,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Add product relation if exists and not already added
-      if (row.offering_product && row.sku_version) {
+      if (row.offering_product) {
         const existingProduct = productWithRelations.offering_products.find(
           p => p.sku_version === row.offering_product!.sku_version
         );
@@ -111,6 +112,19 @@ export class DatabaseStorage implements IStorage {
           productWithRelations.offering_products.push({
             offering_id: row.offering_product.offering_id,
             sku_version: row.offering_product.sku_version
+          });
+        }
+      }
+
+      // Add SKU version relation if exists and not already added
+      if (row.sku_version) {
+        const existingVersion = productWithRelations.sku_versions.find(
+          v => v.sku_version_id === row.sku_version!.sku_version_id
+        );
+        if (!existingVersion) {
+          productWithRelations.sku_versions.push({
+            ...row.sku_version,
+            sku_version_pricing: row.sku_version_pricing
           });
         }
       }
