@@ -187,8 +187,7 @@ export function ProductFormModal({
           fulfillment_platform_ids: editingProduct.sku_versions[0]?.sku_version_fulfillment_platforms?.map(fp => fp.fulfillment_platform.fulfillment_platform_id) || [],
           feature_ids: versionDetail?.sku_version_features?.map(f => f.feature.product_feature_id) || [],
           sequence_order: editingProduct.sequence_order || undefined,
-          active: editingProduct.active || false,
-          not_for_sale: editingProduct.not_for_sale || false,
+          product_status: editingProduct.active ? "active" : "not_for_sale",
         });
       } else {
         // Reset form for new product

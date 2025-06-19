@@ -179,8 +179,8 @@ export class DatabaseStorage implements IStorage {
           sku: productData.sku,
           description_short: productData.description_short,
           description_long: productData.description_long,
-          active: productData.active,
-          not_for_sale: productData.not_for_sale,
+          active: productData.product_status === "active",
+          not_for_sale: productData.product_status === "not_for_sale",
           sequence_order: productData.sequence_order,
         })
         .returning();
