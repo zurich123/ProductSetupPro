@@ -23,8 +23,8 @@ export default function Products() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append("search", search);
-      if (selectedEcosystem && selectedEcosystem !== "") params.append("ecosystem_id", selectedEcosystem);
-      if (selectedBrand && selectedBrand !== "") params.append("brand_id", selectedBrand);
+      if (selectedEcosystem && selectedEcosystem !== "all") params.append("ecosystem_id", selectedEcosystem);
+      if (selectedBrand && selectedBrand !== "all") params.append("brand_id", selectedBrand);
       
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error("Failed to fetch products");
@@ -34,7 +34,7 @@ export default function Products() {
 
   // Client-side status filtering since it's based on boolean combinations
   const products = allProducts.filter(product => {
-    if (!selectedStatus || selectedStatus === "") return true;
+    if (!selectedStatus || selectedStatus === "all") return true;
     
     const isActive = product.active && !product.not_for_sale;
     const isInactive = !product.active && product.not_for_sale;
@@ -114,7 +114,7 @@ export default function Products() {
                 <SelectValue placeholder="All Ecosystems" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Ecosystems</SelectItem>
+                <SelectItem value="all">All Ecosystems</SelectItem>
                 {ecosystems.map((ecosystem) => (
                   <SelectItem key={ecosystem.ecosystem_id} value={ecosystem.ecosystem_id.toString()}>
                     {ecosystem.ecosystem_name}
@@ -128,7 +128,7 @@ export default function Products() {
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Brands</SelectItem>
+                <SelectItem value="all">All Brands</SelectItem>
                 {brands.map((brand) => (
                   <SelectItem key={brand.id} value={brand.id.toString()}>
                     {brand.name}
@@ -142,7 +142,7 @@ export default function Products() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
