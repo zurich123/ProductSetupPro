@@ -326,8 +326,8 @@ export class DatabaseStorage implements IStorage {
           sku: productData.sku,
           description_short: productData.description_short,
           description_long: productData.description_long,
-          active: productData.active,
-          not_for_sale: productData.not_for_sale,
+          active: productData.product_status === "active",
+          not_for_sale: productData.product_status === "not_for_sale",
           sequence_order: productData.sequence_order,
         })
         .where(eq(offering.offering_id, id));
@@ -461,8 +461,7 @@ export class DatabaseStorage implements IStorage {
       fulfillment_platform_ids: [],
       feature_ids: [],
       sequence_order: originalProduct.sequence_order || undefined,
-      active: false, // Clone as inactive by default
-      not_for_sale: originalProduct.not_for_sale || false,
+      product_status: originalProduct.active ? "active" : "not_for_sale",
     };
 
     return await this.createProduct(cloneData);
