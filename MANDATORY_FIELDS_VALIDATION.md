@@ -42,8 +42,7 @@ The product management system enforces strict validation rules to ensure data in
 ## Optional Fields with System Defaults
 
 ### Status Fields
-- **`active`** - Default: `true`
-- **`not_for_sale`** - Default: `false`
+- **`product_status`** - Default: `"draft"` (enum: "active", "inactive", "draft")
 
 ### Educational Fields
 - **`qualifying_education`** - Default: `false`
