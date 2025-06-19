@@ -16,6 +16,7 @@ export const brand_lookup = pgTable("brand_lookup", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 128 }),
   description: varchar("description", { length: 256 }),
+  ecosystem_id: integer("ecosystem_id").references(() => ecosystem.ecosystem_id),
 });
 
 // Profession lookup table
@@ -449,9 +450,7 @@ export type InsertSkuVersion = z.infer<typeof insertSkuVersionSchema>;
 export type SkuVersion = typeof sku_version.$inferSelect;
 export type InsertSkuVersionPricing = z.infer<typeof insertSkuVersionPricingSchema>;
 export type SkuVersionPricing = typeof sku_version_pricing.$inferSelect;
-export type BrandLookup = typeof brand_lookup.$inferSelect & {
-  ecosystem?: Ecosystem;
-};
+export type BrandLookup = typeof brand_lookup.$inferSelect;
 export type Ecosystem = typeof ecosystem.$inferSelect;
 export type FulfillmentPlatform = typeof fulfillment_platform.$inferSelect;
 export type ProductFormData = z.infer<typeof productFormSchema>;

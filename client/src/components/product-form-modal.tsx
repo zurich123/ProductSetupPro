@@ -302,7 +302,7 @@ export function ProductFormModal({
                           <SelectContent>
                             {brands.map((brand) => (
                               <SelectItem key={brand.id} value={brand.id.toString()}>
-                                {brand.name} {brand.ecosystem?.ecosystem_name && `(${brand.ecosystem.ecosystem_name})`}
+                                {brand.name}
                               </SelectItem>
                             ))}
                           </SelectContent>

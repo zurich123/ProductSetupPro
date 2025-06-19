@@ -469,29 +469,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBrands(): Promise<BrandLookup[]> {
-    const results = await db
-      .select({
-        id: brand_lookup.id,
-        name: brand_lookup.name,
-        description: brand_lookup.description,
-        ecosystem_id: brand_lookup.ecosystem_id,
-        ecosystem: {
-          ecosystem_id: ecosystem.ecosystem_id,
-          ecosystem_name: ecosystem.ecosystem_name,
-          profession_id: ecosystem.profession_id,
-          brand_id: ecosystem.brand_id,
-        },
-      })
-      .from(brand_lookup)
-      .leftJoin(ecosystem, eq(brand_lookup.ecosystem_id, ecosystem.ecosystem_id));
-    
-    return results.map(row => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      ecosystem_id: row.ecosystem_id,
-      ecosystem: row.ecosystem || undefined,
-    }));
+    return await db.select().from(brand_lookup);
   }
 
   async getEcosystems(): Promise<Ecosystem[]> {
