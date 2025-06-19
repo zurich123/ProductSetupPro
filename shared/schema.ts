@@ -83,7 +83,7 @@ export const sku_version_pricing = pgTable("sku_version_pricing", {
   subscription_price: decimal("subscription_price", { precision: 10, scale: 2 }),
   msrp: decimal("msrp", { precision: 10, scale: 2 }),
   promotional_price: decimal("promotional_price", { precision: 10, scale: 2 }),
-  discount_percentage: decimal("discount_percentage", { precision: 3, scale: 2 }),
+  discount_percentage: decimal("discount_percentage", { precision: 5, scale: 2 }),
   recognition_period_months: integer("recognition_period_months"),
   // Enhanced pricing fields from PDF
   revenue_allocation_method: varchar("revenue_allocation_method", { length: 64 }),
