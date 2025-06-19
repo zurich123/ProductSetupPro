@@ -72,22 +72,96 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(search?: string, ecosystem_id?: number, brand_id?: number): Promise<ProductWithRelations[]> {
-    const query = db
+    // Get basic offering data with brands
+    const offerings = await db
       .select()
       .from(offering)
       .leftJoin(offering_brand, eq(offering.offering_id, offering_brand.offering_id))
       .leftJoin(brand_lookup, eq(offering_brand.brand_id, brand_lookup.id))
-      .leftJoin(offering_product, eq(offering.offering_id, offering_product.offering_id))
-      .leftJoin(sku_version, eq(offering.offering_id, sku_version.offering_id))
-      .leftJoin(sku_version_detail, eq(sku_version.sku_version_id, sku_version_detail.sku_version))
-      .leftJoin(sku_version_pricing, eq(sku_version_detail.sku_version_detail_id, sku_version_pricing.sku_version_detail_id))
-      .leftJoin(sku_version_features, eq(sku_version_detail.sku_version_detail_id, sku_version_features.sku_version_detail_id))
-      .leftJoin(product_features, eq(sku_version_features.feature_id, product_features.product_feature_id))
-      .leftJoin(sku_version_fulfillment_platform, eq(sku_version.sku_version_id, sku_version_fulfillment_platform.sku_version_id))
-      .leftJoin(fulfillment_platform, eq(sku_version_fulfillment_platform.fulfillment_platform_id, fulfillment_platform.fulfillment_platform_id))
-      .leftJoin(sku_version_content, eq(sku_version_detail.sku_version_detail_id, sku_version_content.sku_version_detail_id))
-      .leftJoin(content_language, eq(sku_version_content.sku_version_content_id, content_language.sku_version_content_id))
-      .leftJoin(language_lookup, eq(content_language.language_id, language_lookup.language_id));
+      .leftJoin(offering_product, eq(offering.offering_id, offering_product.offering_id));
+
+    const resultMap = new Map<string, ProductWithRelations>();
+
+    // Process basic offering data
+    for (const row of offerings) {
+      const productId = row.offering.offering_id;
+      
+      if (!resultMap.has(productId)) {
+        resultMap.set(productId, {
+          ...row.offering,
+          offering_brands: [],
+          offering_products: [],
+          sku_versions: [],
+        });
+      }
+
+      const product = resultMap.get(productId)!;
+
+      // Add offering_brand if not already present
+      if (row.offering_brand && !product.offering_brands.some(ob => ob.id === row.offering_brand?.id)) {
+        product.offering_brands.push({
+          ...row.offering_brand,
+          brand: row.brand_lookup,
+        });
+      }
+
+      // Add offering_product if not already present
+      if (row.offering_product && !product.offering_products.some(op => op.offering_id === row.offering_product?.offering_id)) {
+        product.offering_products.push(row.offering_product);
+      }
+    }
+
+    // Get SKU versions with details for each product
+    for (const productId of resultMap.keys()) {
+      const product = resultMap.get(productId)!;
+      const versions = await db
+        .select()
+        .from(sku_version)
+        .leftJoin(sku_version_detail, eq(sku_version.sku_version_id, sku_version_detail.sku_version))
+        .leftJoin(sku_version_pricing, eq(sku_version_detail.sku_version_detail_id, sku_version_pricing.sku_version_detail_id))
+        .leftJoin(sku_version_fulfillment_platform, eq(sku_version.sku_version_id, sku_version_fulfillment_platform.sku_version_id))
+        .leftJoin(fulfillment_platform, eq(sku_version_fulfillment_platform.fulfillment_platform_id, fulfillment_platform.fulfillment_platform_id))
+        .where(eq(sku_version.offering_id, productId));
+
+      for (const versionRow of versions) {
+        if (versionRow.sku_version && !product.sku_versions.some((sv: any) => sv.sku_version_id === versionRow.sku_version?.sku_version_id)) {
+          // Get features for this version detail
+          const features = versionRow.sku_version_detail ? await db
+            .select()
+            .from(sku_version_features)
+            .leftJoin(product_features, eq(sku_version_features.feature_id, product_features.product_feature_id))
+            .where(eq(sku_version_features.sku_version_detail_id, versionRow.sku_version_detail.sku_version_detail_id)) : [];
+
+          // Get content for this version detail
+          const contents = versionRow.sku_version_detail ? await db
+            .select()
+            .from(sku_version_content)
+            .where(eq(sku_version_content.sku_version_detail_id, versionRow.sku_version_detail.sku_version_detail_id)) : [];
+
+          product.sku_versions.push({
+            ...versionRow.sku_version,
+            sku_version_detail: versionRow.sku_version_detail ? {
+              ...versionRow.sku_version_detail,
+              sku_version_pricing: versionRow.sku_version_pricing ? [versionRow.sku_version_pricing] : [],
+              sku_version_features: features.map(f => ({
+                ...f.sku_version_features!,
+                feature: f.product_features!,
+              })),
+              sku_version_contents: contents.map(c => ({
+                ...c,
+                content_languages: [],
+              })),
+            } : null,
+            sku_version_fulfillment_platforms: versionRow.sku_version_fulfillment_platform && versionRow.fulfillment_platform ? [{
+              ...versionRow.sku_version_fulfillment_platform,
+              fulfillment_platform: versionRow.fulfillment_platform,
+            }] : [],
+          });
+        }
+      }
+    }
+
+    return Array.from(resultMap.values());
 
     const results = await query;
     
