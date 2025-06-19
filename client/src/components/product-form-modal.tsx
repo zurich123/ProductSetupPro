@@ -96,7 +96,7 @@ export function ProductFormModal({
       fulfillment_platform_ids: [],
       feature_ids: [],
       sequence_order: 0,
-      product_status: "active" as const,
+      product_status: "draft" as const,
     },
   });
 
@@ -187,7 +187,7 @@ export function ProductFormModal({
           fulfillment_platform_ids: editingProduct.sku_versions[0]?.sku_version_fulfillment_platforms?.map(fp => fp.fulfillment_platform.fulfillment_platform_id) || [],
           feature_ids: versionDetail?.sku_version_features?.map(f => f.feature.product_feature_id) || [],
           sequence_order: editingProduct.sequence_order || undefined,
-          product_status: editingProduct.active ? "active" : "not_for_sale",
+          product_status: editingProduct.active ? "active" : (editingProduct.not_for_sale ? "inactive" : "draft"),
         });
       } else {
         // Reset form for new product
@@ -203,7 +203,7 @@ export function ProductFormModal({
           cogs: undefined,
           fulfillment_platform_id: undefined,
           sequence_order: undefined,
-          product_status: "active" as const,
+          product_status: "draft" as const,
         });
       }
     }
@@ -814,10 +814,17 @@ export function ProductFormModal({
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="active" id="active" />
                               <Label htmlFor="active">Active</Label>
+                              <span className="text-sm text-muted-foreground ml-2">Available for purchase and visible to customers</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="not_for_sale" id="not_for_sale" />
-                              <Label htmlFor="not_for_sale">Not for Sale</Label>
+                              <RadioGroupItem value="inactive" id="inactive" />
+                              <Label htmlFor="inactive">Inactive</Label>
+                              <span className="text-sm text-muted-foreground ml-2">Not available for purchase but visible</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="draft" id="draft" />
+                              <Label htmlFor="draft">Draft</Label>
+                              <span className="text-sm text-muted-foreground ml-2">Work in progress, not visible to customers</span>
                             </div>
                           </RadioGroup>
                         </FormControl>
