@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(offering_brand, eq(offering.offering_id, offering_brand.offering_id))
       .leftJoin(brand_lookup, eq(offering_brand.brand_id, brand_lookup.id))
       .leftJoin(offering_product, eq(offering.offering_id, offering_product.offering_id))
-      .leftJoin(sku_version, eq(offering_product.sku_version, sku_version.sku_version_id))
+      .leftJoin(sku_version, eq(offering.offering_id, sku_version.offering_id))
       .leftJoin(sku_version_pricing, eq(sku_version.sku_version_id, sku_version_pricing.sku_version_detail_id));
 
     const results = await query;
@@ -131,6 +131,7 @@ export class DatabaseStorage implements IStorage {
         .insert(offering)
         .values({
           name: productData.name,
+          sku: productData.sku,
           description_short: productData.description_short,
           description_long: productData.description_long,
           active: productData.active,
@@ -143,7 +144,7 @@ export class DatabaseStorage implements IStorage {
       const [newSkuVersion] = await tx
         .insert(sku_version)
         .values({
-          sku: productData.sku,
+          offering_id: newOffering.offering_id,
           version_name: `v1.0`
         })
         .returning();
@@ -191,6 +192,7 @@ export class DatabaseStorage implements IStorage {
         .update(offering)
         .set({
           name: productData.name,
+          sku: productData.sku,
           description_short: productData.description_short,
           description_long: productData.description_long,
           active: productData.active,
@@ -205,27 +207,19 @@ export class DatabaseStorage implements IStorage {
         throw new Error("Product not found");
       }
 
-      // Update SKU if there's one linked
-      if (existingProduct.offering_products.length > 0) {
-        const skuVersionId = existingProduct.offering_products[0].sku_version;
-        if (skuVersionId) {
-          await tx
-            .update(sku_version)
-            .set({
-              sku: productData.sku,
-            })
-            .where(eq(sku_version.sku_version_id, skuVersionId));
-
-          // Update pricing
-          await tx
-            .update(sku_version_pricing)
-            .set({
-              base_price: productData.base_price.toString(),
-              msrp: productData.msrp?.toString(),
-              cogs: productData.cogs?.toString(),
-            })
-            .where(eq(sku_version_pricing.sku_version_detail_id, skuVersionId));
-        }
+      // Update SKU versions pricing (first version only for now)
+      if (existingProduct.sku_versions.length > 0) {
+        const skuVersionId = existingProduct.sku_versions[0].sku_version_id;
+        
+        // Update pricing
+        await tx
+          .update(sku_version_pricing)
+          .set({
+            base_price: productData.base_price.toString(),
+            msrp: productData.msrp?.toString(),
+            cogs: productData.cogs?.toString(),
+          })
+          .where(eq(sku_version_pricing.sku_version_detail_id, skuVersionId));
       }
 
       // Update brand relationship
@@ -259,12 +253,10 @@ export class DatabaseStorage implements IStorage {
       // Delete in correct order due to foreign key constraints
       
       // Delete SKU version pricing
-      for (const offeringProduct of product.offering_products) {
-        if (offeringProduct.sku_version) {
-          await tx
-            .delete(sku_version_pricing)
-            .where(eq(sku_version_pricing.sku_version_detail_id, offeringProduct.sku_version));
-        }
+      for (const version of product.sku_versions) {
+        await tx
+          .delete(sku_version_pricing)
+          .where(eq(sku_version_pricing.sku_version_detail_id, version.sku_version_id));
       }
 
       // Delete offering products
@@ -273,13 +265,9 @@ export class DatabaseStorage implements IStorage {
         .where(eq(offering_product.offering_id, id));
 
       // Delete SKU versions
-      for (const offeringProduct of product.offering_products) {
-        if (offeringProduct.sku_version) {
-          await tx
-            .delete(sku_version)
-            .where(eq(sku_version.sku_version_id, offeringProduct.sku_version));
-        }
-      }
+      await tx
+        .delete(sku_version)
+        .where(eq(sku_version.offering_id, id));
 
       // Delete offering brands
       await tx
@@ -300,17 +288,8 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get the original product data to create a clone
-    const skuVersionId = originalProduct.offering_products[0]?.sku_version;
-    let originalSku = "";
-    let originalPricing: any = null;
-    
-    if (skuVersionId) {
-      const [skuData] = await db.select().from(sku_version).where(eq(sku_version.sku_version_id, skuVersionId));
-      const [pricingData] = await db.select().from(sku_version_pricing).where(eq(sku_version_pricing.sku_version_detail_id, skuVersionId));
-      originalSku = skuData?.sku || "";
-      originalPricing = pricingData;
-    }
-    
+    const originalSku = originalProduct.sku;
+    const originalPricing = originalProduct.sku_versions[0]?.sku_version_pricing;
     const originalBrand = originalProduct.offering_brands[0]?.brand_id;
 
     const cloneData: ProductFormData = {

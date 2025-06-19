@@ -57,6 +57,7 @@ export const cost_center_lookup = pgTable("cost_center_lookup", {
 export const offering = pgTable("offering", {
   offering_id: uuid("offering_id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 128 }),
+  sku: varchar("sku", { length: 255 }).notNull(),
   active: boolean("active").default(true),
   description_short: varchar("description_short", { length: 255 }),
   description_long: text("description_long"),
@@ -67,7 +68,7 @@ export const offering = pgTable("offering", {
 // SKU version table
 export const sku_version = pgTable("sku_version", {
   sku_version_id: serial("sku_version_id").primaryKey(),
-  sku: varchar("sku", { length: 255 }),
+  offering_id: uuid("offering_id").notNull(),
   version_name: varchar("version_name", { length: 255 }),
 });
 
@@ -133,6 +134,7 @@ export const offeringRelations = relations(offering, ({ many, one }) => ({
   offering_professions: many(offering_profession),
   offering_products: many(offering_product),
   offering_pricing: many(offering_pricing),
+  sku_versions: many(sku_version),
 }));
 
 export const offering_brandRelations = relations(offering_brand, ({ one }) => ({
@@ -169,6 +171,10 @@ export const offering_productRelations = relations(offering_product, ({ one }) =
 }));
 
 export const sku_versionRelations = relations(sku_version, ({ many, one }) => ({
+  offering: one(offering, {
+    fields: [sku_version.offering_id],
+    references: [offering.offering_id],
+  }),
   offering_products: many(offering_product),
   sku_version_pricing: one(sku_version_pricing, {
     fields: [sku_version.sku_version_id],
@@ -214,6 +220,14 @@ export const productFormSchema = z.object({
   not_for_sale: z.boolean().default(false),
 });
 
+// Version form schema for adding versions to existing products
+export const versionFormSchema = z.object({
+  version_name: z.string().min(1, "Version name is required"),
+  base_price: z.number().min(0, "Base price must be positive"),
+  msrp: z.number().min(0).optional(),
+  cogs: z.number().min(0).optional(),
+});
+
 // Types
 export type InsertOffering = z.infer<typeof insertOfferingSchema>;
 export type Offering = typeof offering.$inferSelect;
@@ -225,6 +239,7 @@ export type BrandLookup = typeof brand_lookup.$inferSelect;
 export type Ecosystem = typeof ecosystem.$inferSelect;
 export type FulfillmentPlatform = typeof fulfillment_platform.$inferSelect;
 export type ProductFormData = z.infer<typeof productFormSchema>;
+export type VersionFormData = z.infer<typeof versionFormSchema>;
 
 // Product with relations type for display
 export type ProductWithRelations = Offering & {
@@ -232,6 +247,9 @@ export type ProductWithRelations = Offering & {
     brand: BrandLookup | null;
   })[];
   offering_products: (typeof offering_product.$inferSelect)[];
+  sku_versions: (SkuVersion & {
+    sku_version_pricing: SkuVersionPricing | null;
+  })[];
 };
 
 // Keep existing user schema for compatibility

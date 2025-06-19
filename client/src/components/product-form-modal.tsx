@@ -111,17 +111,18 @@ export function ProductFormModal({
       if (editingProduct) {
         // Populate form with existing product data
         const brandId = editingProduct.offering_brands[0]?.brand_id;
+        const pricing = editingProduct.sku_versions[0]?.sku_version_pricing;
 
         form.reset({
           name: editingProduct.name || "",
-          sku: "SKU-" + (editingProduct.offering_products[0]?.sku_version || ""),
+          sku: editingProduct.sku || "",
           ecosystem_id: 1, // Default for now
           brand_id: brandId || 0,
           description_short: editingProduct.description_short || "",
           description_long: editingProduct.description_long || "",
-          base_price: 99.99,
-          msrp: 149.99,
-          cogs: 45.00,
+          base_price: pricing?.base_price ? parseFloat(pricing.base_price) : 0,
+          msrp: pricing?.msrp ? parseFloat(pricing.msrp) : undefined,
+          cogs: pricing?.cogs ? parseFloat(pricing.cogs) : undefined,
           fulfillment_platform_id: undefined,
           sequence_order: editingProduct.sequence_order || undefined,
           active: editingProduct.active || false,
