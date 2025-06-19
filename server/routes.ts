@@ -37,8 +37,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new product
   app.post("/api/products", async (req, res) => {
     try {
-      const validatedData = productFormSchema.parse(req.body);
-      const product = await storage.createProduct(validatedData);
+      const productData = productFormSchema.parse(req.body);
+      
+      // Auto-derive ecosystem from brand if not provided
+      if (!productData.ecosystem_id && productData.brand_id) {
+        const brands = await storage.getBrands();
+        const selectedBrand = brands.find(b => b.id === productData.brand_id);
+        if (selectedBrand?.ecosystem_id) {
+          productData.ecosystem_id = selectedBrand.ecosystem_id;
+        }
+      }
+      
+      const product = await storage.createProduct(productData);
       res.status(201).json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
