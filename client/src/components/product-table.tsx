@@ -119,8 +119,14 @@ export function ProductTable({ products, isLoading, onEdit, onRefresh }: Product
   };
 
   const getProductStatus = (product: ProductWithRelations) => {
-    if (product.not_for_sale) return "Draft";
-    return product.active ? "Active" : "Inactive";
+    // Correct 3-state logic:
+    // Active: active=true, not_for_sale=false
+    // Inactive: active=false, not_for_sale=true  
+    // Draft: active=false, not_for_sale=false
+    if (product.active && !product.not_for_sale) return "Active";
+    if (!product.active && product.not_for_sale) return "Inactive";
+    if (!product.active && !product.not_for_sale) return "Draft";
+    return "Unknown";
   };
 
   const getStatusBadgeVariant = (status: string) => {
