@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal, uuid, varchar, tinyint, bigint, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, uuid, varchar, bigint, timestamp, smallint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -40,7 +40,7 @@ export const fulfillment_platform = pgTable("fulfillment_platform", {
 
 // State lookup table
 export const state_lookup = pgTable("state_lookup", {
-  state_id: tinyint("state_id").primaryKey(),
+  state_id: smallint("state_id").primaryKey(),
   state_name: varchar("state_name", { length: 128 }),
   state_abbr: varchar("state_abbr", { length: 4 }),
   notes: varchar("notes", { length: 512 }),
@@ -61,7 +61,7 @@ export const offering = pgTable("offering", {
   description_short: varchar("description_short", { length: 255 }),
   description_long: text("description_long"),
   not_for_sale: boolean("not_for_sale").default(false),
-  sequence_order: tinyint("sequence_order"),
+  sequence_order: smallint("sequence_order"),
 });
 
 // SKU version table
@@ -124,7 +124,7 @@ export const offering_pricing = pgTable("offering_pricing", {
 export const sku_version_state = pgTable("sku_version_state", {
   sku_version_state_id: bigint("sku_version_state_id", { mode: "number" }).primaryKey(),
   sku_version_id: integer("sku_version_id"),
-  state_id: tinyint("state_id"),
+  state_id: smallint("state_id"),
 });
 
 // Relations

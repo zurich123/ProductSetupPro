@@ -61,7 +61,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(search?: string, ecosystem_id?: number, brand_id?: number): Promise<ProductWithRelations[]> {
-    let query = db
+    const query = db
       .select()
       .from(offering)
       .leftJoin(offering_brand, eq(offering.offering_id, offering_brand.offering_id))
@@ -69,25 +69,6 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(offering_product, eq(offering.offering_id, offering_product.offering_id))
       .leftJoin(sku_version, eq(offering_product.sku_version, sku_version.sku_version_id))
       .leftJoin(sku_version_pricing, eq(sku_version.sku_version_id, sku_version_pricing.sku_version_detail_id));
-
-    const conditions = [];
-    
-    if (search) {
-      conditions.push(
-        or(
-          ilike(offering.name, `%${search}%`),
-          ilike(sku_version.sku, `%${search}%`)
-        )
-      );
-    }
-    
-    if (brand_id) {
-      conditions.push(eq(offering_brand.brand_id, brand_id));
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
 
     const results = await query;
     
@@ -128,11 +109,12 @@ export class DatabaseStorage implements IStorage {
         );
         if (!existingProduct) {
           productWithRelations.offering_products.push({
-            ...row.offering_product,
-            sku_version: {
+            offering_id: row.offering_product.offering_id,
+            sku_version: row.offering_product.sku_version,
+            sku_version: row.sku_version ? {
               ...row.sku_version,
               sku_version_pricing: row.sku_version_pricing
-            }
+            } : null
           });
         }
       }

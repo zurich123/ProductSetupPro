@@ -97,7 +97,7 @@ export default function Products() {
                 <SelectValue placeholder="All Ecosystems" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Ecosystems</SelectItem>
+                <SelectItem value="0">All Ecosystems</SelectItem>
                 {ecosystems.map((ecosystem) => (
                   <SelectItem key={ecosystem.ecosystem_id} value={ecosystem.ecosystem_id.toString()}>
                     {ecosystem.ecosystem_name}
@@ -111,7 +111,7 @@ export default function Products() {
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Brands</SelectItem>
+                <SelectItem value="0">All Brands</SelectItem>
                 {brands.map((brand) => (
                   <SelectItem key={brand.id} value={brand.id.toString()}>
                     {brand.name}
@@ -125,7 +125,7 @@ export default function Products() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
