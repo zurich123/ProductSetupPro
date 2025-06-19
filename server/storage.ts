@@ -469,7 +469,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBrands(): Promise<BrandLookup[]> {
-    return await db.select().from(brand_lookup);
+    return await db
+      .select({
+        id: brand_lookup.id,
+        name: brand_lookup.name,
+        description: brand_lookup.description,
+        ecosystem_id: brand_lookup.ecosystem_id,
+        ecosystem: ecosystem,
+      })
+      .from(brand_lookup)
+      .leftJoin(ecosystem, eq(brand_lookup.ecosystem_id, ecosystem.ecosystem_id));
   }
 
   async getEcosystems(): Promise<Ecosystem[]> {
