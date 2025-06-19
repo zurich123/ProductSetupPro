@@ -274,20 +274,35 @@ export function ProductFormModal({
 
                   <FormField
                     control={form.control}
-                    name="ecosystem_id"
+                    name="brand_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Ecosystem *</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormLabel>Brand * (Ecosystem will be automatically selected)</FormLabel>
+                        <Select 
+                          onValueChange={(value) => {
+                            const brandId = parseInt(value);
+                            field.onChange(brandId);
+                            
+                            // Auto-select ecosystem based on brand
+                            const selectedBrand = brands.find(b => b.id === brandId);
+                            if (selectedBrand?.ecosystem_id) {
+                              form.setValue('ecosystem_id', selectedBrand.ecosystem_id);
+                            } else if (ecosystems.length > 0) {
+                              // Fallback to first ecosystem if brand doesn't have one assigned
+                              form.setValue('ecosystem_id', ecosystems[0].ecosystem_id);
+                            }
+                          }} 
+                          value={field.value?.toString()}
+                        >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select Ecosystem" />
+                              <SelectValue placeholder="Select brand (ecosystem will auto-populate)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {ecosystems.map((ecosystem) => (
-                              <SelectItem key={ecosystem.ecosystem_id} value={ecosystem.ecosystem_id.toString()}>
-                                {ecosystem.ecosystem_name}
+                            {brands.map((brand) => (
+                              <SelectItem key={brand.id} value={brand.id.toString()}>
+                                {brand.name} {brand.ecosystem?.ecosystem_name && `(${brand.ecosystem.ecosystem_name})`}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -297,28 +312,21 @@ export function ProductFormModal({
                     )}
                   />
 
+                  {/* Show selected ecosystem (read-only) */}
+                  {form.watch('ecosystem_id') && (
+                    <div className="p-3 bg-blue-50 rounded-md">
+                      <p className="text-sm text-blue-700">
+                        <strong>Selected Ecosystem:</strong> {ecosystems.find(e => e.ecosystem_id === form.watch('ecosystem_id'))?.ecosystem_name}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Hidden field for ecosystem_id */}
                   <FormField
                     control={form.control}
-                    name="brand_id"
+                    name="ecosystem_id"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Brand *</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Brand" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {brands.map((brand) => (
-                              <SelectItem key={brand.id} value={brand.id.toString()}>
-                                {brand.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                      <input type="hidden" {...field} />
                     )}
                   />
                 </div>
@@ -373,8 +381,12 @@ export function ProductFormModal({
                               type="number" 
                               step="0.01"
                               className="pl-8"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              value={field.value || ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                field.onChange(value === "" ? undefined : parseFloat(value));
+                              }}
+                              placeholder="0.00"
                             />
                           </div>
                         </FormControl>
