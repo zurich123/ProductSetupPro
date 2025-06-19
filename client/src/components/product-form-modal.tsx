@@ -19,7 +19,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -95,8 +96,7 @@ export function ProductFormModal({
       fulfillment_platform_ids: [],
       feature_ids: [],
       sequence_order: 0,
-      active: true,
-      not_for_sale: false,
+      product_status: "active" as const,
     },
   });
 
@@ -204,8 +204,7 @@ export function ProductFormModal({
           cogs: undefined,
           fulfillment_platform_id: undefined,
           sequence_order: undefined,
-          active: true,
-          not_for_sale: false,
+          product_status: "active" as const,
         });
       }
     }
@@ -801,39 +800,32 @@ export function ProductFormModal({
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="active"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel>Active</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="not_for_sale"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel>Not for Sale</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="product_status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Status</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className="flex flex-col space-y-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="active" id="active" />
+                              <Label htmlFor="active">Active</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="not_for_sale" id="not_for_sale" />
+                              <Label htmlFor="not_for_sale">Not for Sale</Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>

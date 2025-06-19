@@ -375,8 +375,7 @@ export const productFormSchema = z.object({
   description_short: z.string().optional(),
   description_long: z.string().optional(),
   sequence_order: z.number().min(0).max(255).optional(),
-  active: z.boolean().default(true),
-  not_for_sale: z.boolean().default(false),
+  product_status: z.enum(["active", "not_for_sale"]).default("active"),
   
   // Version details
   version_name: z.string().min(1, "Version name is required"),
