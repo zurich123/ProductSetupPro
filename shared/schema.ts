@@ -177,7 +177,7 @@ export const product_features = pgTable("product_features", {
 
 // SKU version features (many-to-many relationship)
 export const sku_version_features = pgTable("sku_version_features", {
-  sku_feature_id: bigint("sku_feature_id", { mode: "number" }).primaryKey(),
+  sku_feature_id: serial("sku_feature_id").primaryKey(),
   sku_version_detail_id: integer("sku_version_detail_id"),
   feature_id: integer("feature_id"),
   regulatory_modifier: boolean("regulatory_modifier").default(false),
@@ -215,7 +215,7 @@ export const content_language = pgTable("content_language", {
 
 // SKU version fulfillment platform
 export const sku_version_fulfillment_platform = pgTable("sku_version_fulfillment_platform", {
-  sku_fulfillment_platform_id: bigint("sku_fulfillment_platform_id", { mode: "number" }).primaryKey(),
+  sku_fulfillment_platform_id: serial("sku_fulfillment_platform_id").primaryKey(),
   sku_version_id: integer("sku_version_id"),
   fulfillment_platform_id: integer("fulfillment_platform_id"),
 });

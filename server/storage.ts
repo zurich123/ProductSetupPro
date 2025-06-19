@@ -143,7 +143,13 @@ export class DatabaseStorage implements IStorage {
         if (!existingVersion) {
           productWithRelations.sku_versions.push({
             ...row.sku_version,
-            sku_version_pricing: row.sku_version_pricing
+            sku_version_detail: row.sku_version_detail ? {
+              ...row.sku_version_detail,
+              sku_version_pricing: row.sku_version_pricing ? [row.sku_version_pricing] : [],
+              sku_version_features: [],
+              sku_version_contents: [],
+            } : null,
+            sku_version_fulfillment_platforms: [],
           });
         }
       }
@@ -241,22 +247,24 @@ export class DatabaseStorage implements IStorage {
 
       // Link features
       if (productData.feature_ids && productData.feature_ids.length > 0) {
-        const featureValues = productData.feature_ids.map(featureId => ({
-          sku_version_detail_id: newSkuVersionDetail.sku_version_detail_id,
-          feature_id: featureId,
-          regulatory_modifier: false,
-          pricing_modifier: false,
-        }));
-        await tx.insert(sku_version_features).values(featureValues);
+        for (const featureId of productData.feature_ids) {
+          await tx.insert(sku_version_features).values({
+            sku_version_detail_id: newSkuVersionDetail.sku_version_detail_id,
+            feature_id: featureId,
+            regulatory_modifier: false,
+            pricing_modifier: false,
+          });
+        }
       }
 
       // Link fulfillment platforms
       if (productData.fulfillment_platform_ids && productData.fulfillment_platform_ids.length > 0) {
-        const fulfillmentValues = productData.fulfillment_platform_ids.map(platformId => ({
-          sku_version_id: newSkuVersion.sku_version_id,
-          fulfillment_platform_id: platformId,
-        }));
-        await tx.insert(sku_version_fulfillment_platform).values(fulfillmentValues);
+        for (const platformId of productData.fulfillment_platform_ids) {
+          await tx.insert(sku_version_fulfillment_platform).values({
+            sku_version_id: newSkuVersion.sku_version_id,
+            fulfillment_platform_id: platformId,
+          });
+        }
       }
 
       // Link offering to SKU version
@@ -389,7 +397,8 @@ export class DatabaseStorage implements IStorage {
 
     // Get the original product data to create a clone
     const originalSku = originalProduct.sku;
-    const originalPricing = originalProduct.sku_versions[0]?.sku_version_pricing;
+    const versionDetail = originalProduct.sku_versions[0]?.sku_version_detail;
+    const originalPricing = versionDetail?.sku_version_pricing[0];
     const originalBrand = originalProduct.offering_brands[0]?.brand_id;
 
     const cloneData: ProductFormData = {
@@ -399,10 +408,35 @@ export class DatabaseStorage implements IStorage {
       brand_id: originalBrand || 1,
       description_short: originalProduct.description_short || undefined,
       description_long: originalProduct.description_long || undefined,
+      version_name: versionDetail?.version_name || "Standard",
+      qualifying_education: versionDetail?.qualifying_education || false,
+      continuing_education: versionDetail?.continuing_education || false,
+      not_for_individual_sale: versionDetail?.not_for_individual_sale || false,
+      credit_hours: versionDetail?.credit_hours,
+      access_period: versionDetail?.access_period,
+      platform: versionDetail?.platform,
+      hybrid_delivery: versionDetail?.hybrid_delivery || false,
+      certifications_awarded: versionDetail?.certifications_awarded,
+      owner: versionDetail?.owner,
       base_price: originalPricing?.base_price ? parseFloat(originalPricing.base_price) : 0,
       msrp: originalPricing?.msrp ? parseFloat(originalPricing.msrp) : undefined,
       cogs: originalPricing?.cogs ? parseFloat(originalPricing.cogs) : undefined,
-      fulfillment_platform_id: undefined,
+      delivery_cost: originalPricing?.delivery_cost ? parseFloat(originalPricing.delivery_cost) : undefined,
+      subscription_price: originalPricing?.subscription_price ? parseFloat(originalPricing.subscription_price) : undefined,
+      promotional_price: originalPricing?.promotional_price ? parseFloat(originalPricing.promotional_price) : undefined,
+      discount_percentage: originalPricing?.discount_percentage ? parseFloat(originalPricing.discount_percentage) : undefined,
+      recognition_period_months: originalPricing?.recognition_period_months,
+      additional_certificate_price: originalPricing?.additional_certificate_price ? parseFloat(originalPricing.additional_certificate_price) : undefined,
+      revenue_allocation_method: originalPricing?.revenue_allocation_method,
+      discount_eligibility: originalPricing?.discount_eligibility,
+      discount_type: originalPricing?.discount_type,
+      recognition_start_trigger: originalPricing?.recognition_start_trigger,
+      content_format: versionDetail?.sku_version_contents[0]?.content_format,
+      mobile_compatible: versionDetail?.sku_version_contents[0]?.mobile_compatible || false,
+      content_length: versionDetail?.sku_version_contents[0]?.content_length,
+      instructor_information: versionDetail?.sku_version_contents[0]?.instructor_information,
+      fulfillment_platform_ids: [],
+      feature_ids: [],
       sequence_order: originalProduct.sequence_order || undefined,
       active: false, // Clone as inactive by default
       not_for_sale: originalProduct.not_for_sale || false,

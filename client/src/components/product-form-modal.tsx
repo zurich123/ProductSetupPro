@@ -457,6 +457,328 @@ export function ProductFormModal({
                     )}
                   />
 
+                  {/* Version Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Version Details</h4>
+                    
+                    <FormField
+                      control={form.control}
+                      name="version_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Version Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g., Standard, Premium" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="qualifying_education"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Qualifying Education</FormLabel>
+                            </div>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="continuing_education"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Continuing Education</FormLabel>
+                            </div>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="credit_hours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Credit Hours</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="access_period"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Access Period</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., 12 months" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="platform"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Platform</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., Web, Mobile" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pricing Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Pricing Information</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="delivery_cost"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Delivery Cost</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="subscription_price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subscription Price</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="promotional_price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Promotional Price</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="discount_percentage"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Discount %</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                min="0" 
+                                max="100"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Content Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Content Information</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="content_format"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Content Format</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., Video, PDF" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="content_length"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Content Length</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., 2 hours" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="instructor_information"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Instructor Information</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Instructor details..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="mobile_compatible"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Mobile Compatible</FormLabel>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Features Selection */}
+                  <div className="space-y-4">
+                    <FormLabel>Product Features</FormLabel>
+                    <div className="grid grid-cols-2 gap-2">
+                      {productFeatures.map((feature) => (
+                        <FormField
+                          key={feature.product_feature_id}
+                          control={form.control}
+                          name="feature_ids"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(feature.product_feature_id)}
+                                  onCheckedChange={(checked) => {
+                                    const currentValues = field.value || [];
+                                    if (checked) {
+                                      field.onChange([...currentValues, feature.product_feature_id]);
+                                    } else {
+                                      field.onChange(currentValues.filter(id => id !== feature.product_feature_id));
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="text-sm font-normal">
+                                {feature.feature_name}
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Fulfillment Platforms */}
+                  <div className="space-y-4">
+                    <FormLabel>Fulfillment Platforms</FormLabel>
+                    <div className="grid grid-cols-1 gap-2">
+                      {fulfillmentPlatforms.map((platform) => (
+                        <FormField
+                          key={platform.fulfillment_platform_id}
+                          control={form.control}
+                          name="fulfillment_platform_ids"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(platform.fulfillment_platform_id)}
+                                  onCheckedChange={(checked) => {
+                                    const currentValues = field.value || [];
+                                    if (checked) {
+                                      field.onChange([...currentValues, platform.fulfillment_platform_id]);
+                                    } else {
+                                      field.onChange(currentValues.filter(id => id !== platform.fulfillment_platform_id));
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="text-sm font-normal">
+                                {platform.name}
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
                     <FormField
                       control={form.control}
