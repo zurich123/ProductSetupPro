@@ -23,8 +23,8 @@ export default function Products() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append("search", search);
-      if (selectedEcosystem && selectedEcosystem !== "0") params.append("ecosystem_id", selectedEcosystem);
-      if (selectedBrand && selectedBrand !== "0") params.append("brand_id", selectedBrand);
+      if (selectedEcosystem && selectedEcosystem !== "") params.append("ecosystem_id", selectedEcosystem);
+      if (selectedBrand && selectedBrand !== "") params.append("brand_id", selectedBrand);
       
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error("Failed to fetch products");
@@ -114,7 +114,7 @@ export default function Products() {
                 <SelectValue placeholder="All Ecosystems" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">All Ecosystems</SelectItem>
+                <SelectItem value="">All Ecosystems</SelectItem>
                 {ecosystems.map((ecosystem) => (
                   <SelectItem key={ecosystem.ecosystem_id} value={ecosystem.ecosystem_id.toString()}>
                     {ecosystem.ecosystem_name}
@@ -128,7 +128,7 @@ export default function Products() {
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">All Brands</SelectItem>
+                <SelectItem value="">All Brands</SelectItem>
                 {brands.map((brand) => (
                   <SelectItem key={brand.id} value={brand.id.toString()}>
                     {brand.name}
