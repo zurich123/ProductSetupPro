@@ -111,7 +111,7 @@ export function ProductTable({ products, isLoading, onEdit, onRefresh }: Product
   };
 
   const getProductPrice = (product: ProductWithRelations) => {
-    const pricing = product.sku_versions[0]?.sku_version_pricing;
+    const pricing = product.sku_versions[0]?.sku_version_detail?.sku_version_pricing[0];
     if (pricing?.base_price) {
       return `$${parseFloat(pricing.base_price).toFixed(2)}`;
     }
