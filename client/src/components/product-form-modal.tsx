@@ -185,16 +185,14 @@ export function ProductFormModal({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="basic">Basic Information</TabsTrigger>
-                <TabsTrigger value="regulatory">Regulatory</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
-              </TabsList>
+            {/* Basic Information Card - Simplified Layout */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
 
-              <TabsContent value="basic" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Product Name */}
                   <FormField
                     control={form.control}
@@ -320,6 +318,44 @@ export function ProductFormModal({
                     )}
                   />
 
+                  {/* Credit Hours */}
+                  <FormField
+                    control={form.control}
+                    name="credit_hours"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                          Credit Hours
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="Enter credit hours" 
+                            {...field} 
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Version Name */}
+                  <FormField
+                    control={form.control}
+                    name="version_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Version Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Standard, Premium" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   {/* Description Long */}
                   <FormField
                     control={form.control}
@@ -338,203 +374,52 @@ export function ProductFormModal({
                       </FormItem>
                     )}
                   />
-                </div>
-              </TabsContent>
 
-              {/* Regulatory Compliance Tab */}
-              <TabsContent value="regulatory" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>State Regulatory Compliance</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-sm text-gray-600 mb-4">
-                      Configure state-specific approvals and credit hours for regulatory compliance.
-                    </div>
-                    
-                    {/* Credit Hours */}
+                  {/* Education Type */}
+                  <div className="grid grid-cols-2 gap-4 md:col-span-2">
                     <FormField
                       control={form.control}
-                      name="credit_hours"
+                      name="continuing_education"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-1">
-                            Credit Hours
-                            <span className="text-red-500">*</span>
-                          </FormLabel>
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="Enter credit hours" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormMessage />
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Continuing Education
+                            </FormLabel>
+                          </div>
                         </FormItem>
                       )}
                     />
                     
-                    {/* Education Type */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="continuing_education"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>
-                                Continuing Education
-                              </FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="qualifying_education"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>
-                                Qualifying Education
-                              </FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Analytics & Tracking Tab */}
-              <TabsContent value="analytics" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Analytics & Performance Tracking</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-sm text-gray-600 mb-4">
-                      Configure tracking and analytics settings for this product.
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="access_period"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Access Period</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 90 days, 1 year" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="platform"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Platform</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select platform" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Online">Online</SelectItem>
-                                <SelectItem value="In-Person">In-Person</SelectItem>
-                                <SelectItem value="Hybrid">Hybrid</SelectItem>
-                                <SelectItem value="Self-Paced">Self-Paced</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
                     <FormField
                       control={form.control}
-                      name="owner"
+                      name="qualifying_education"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product Owner</FormLabel>
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
-                            <Input placeholder="Department or team responsible" {...field} />
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
-                          <FormMessage />
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Qualifying Education
+                            </FormLabel>
+                          </div>
                         </FormItem>
                       )}
                     />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="advanced" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Advanced Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="version_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Version Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Standard, Premium" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="product_status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="draft">Draft</SelectItem>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Submit Button */}
             <div className="flex justify-end space-x-2 pt-4">
