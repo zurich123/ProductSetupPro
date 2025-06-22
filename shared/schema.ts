@@ -97,7 +97,7 @@ export const user_engagement = pgTable("user_engagement", {
   engagement_type: varchar("engagement_type", { length: 64 }), // 'view', 'start', 'complete', 'purchase'
   engagement_date: timestamp("engagement_date").defaultNow(),
   session_duration: integer("session_duration"), // minutes
-  completion_percentage: decimal("completion_percentage", { precision: 5, 2 }),
+  completion_percentage: decimal("completion_percentage", { precision: 5, scale: 2 }),
   device_type: varchar("device_type", { length: 32 }),
   platform: varchar("platform", { length: 64 }),
 });
