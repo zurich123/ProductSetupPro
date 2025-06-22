@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -21,10 +21,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { productFormSchema, type ProductFormData, type ProductWithRelations, type BrandLookup, type Ecosystem } from "@shared/schema";
 
@@ -44,6 +42,7 @@ export function ProductFormModal({
   ecosystems 
 }: ProductFormModalProps) {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!editingProduct;
 
   const form = useForm<ProductFormData>({
@@ -57,95 +56,16 @@ export function ProductFormModal({
       description_long: "",
       base_price: 0,
       version_name: "Standard",
-      product_status: "draft" as const,
+      product_status: "active" as const,
       credit_hours: 0,
       continuing_education: false,
       qualifying_education: false,
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
-      console.log("Submitting product data:", data);
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
-        console.error("API Error:", response.status, errorData);
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      console.log("Product created successfully:", data);
-      toast({
-        title: "Success",
-        description: "Product created successfully",
-      });
-      // Invalidate and refetch products
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      onClose();
-    },
-    onError: (error) => {
-      console.error("Product creation error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create product",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
-      console.log("Updating product data:", data);
-      const response = await fetch(`/api/products/${editingProduct!.offering_id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
-        console.error("API Error:", response.status, errorData);
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      console.log("Product updated successfully:", data);
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-      });
-      // Invalidate and refetch products
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      onClose();
-    },
-    onError: (error) => {
-      console.error("Product update error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update product",
-        variant: "destructive",
-      });
-    },
-  });
-
   useEffect(() => {
     if (isOpen) {
       if (editingProduct) {
-        // Populate form with existing product data
         const brandId = editingProduct.offering_brands[0]?.brand_id;
         const versionDetail = editingProduct.sku_versions[0]?.sku_version_detail;
         const pricing = versionDetail?.sku_version_pricing[0];
@@ -177,7 +97,7 @@ export function ProductFormModal({
           description_long: "",
           base_price: 0,
           version_name: "Standard",
-          product_status: "draft" as const,
+          product_status: "active" as const,
           credit_hours: 0,
           continuing_education: false,
           qualifying_education: false,
@@ -189,18 +109,57 @@ export function ProductFormModal({
     }
   }, [isOpen, editingProduct, form]);
 
-  const onSubmit = (data: ProductFormData) => {
+  const handleSubmit = async (data: ProductFormData) => {
+    setIsSubmitting(true);
     console.log("Form submitted with data:", data);
-    console.log("Form errors:", form.formState.errors);
     
-    if (isEditing) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
+    try {
+      const url = isEditing 
+        ? `/api/products/${editingProduct!.offering_id}`
+        : "/api/products";
+      
+      const method = isEditing ? "PUT" : "POST";
+      
+      console.log(`Making ${method} request to:`, url);
+      
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error:", response.status, errorText);
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log("Success result:", result);
+      
+      toast({
+        title: "Success",
+        description: isEditing ? "Product updated successfully" : "Product created successfully",
+      });
+      
+      // Refresh the page to reload data
+      window.location.reload();
+      
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save product",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -217,14 +176,12 @@ export function ProductFormModal({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information Card - Simplified Layout */}
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Product Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Product Name */}
                   <FormField
@@ -272,20 +229,14 @@ export function ProductFormModal({
                           Brand
                           <span className="text-red-500">*</span>
                         </FormLabel>
-                        <div className="text-sm text-gray-600 mb-2">
-                          Ecosystem will be automatically selected based on brand
-                        </div>
                         <Select 
                           onValueChange={(value) => {
                             const brandId = parseInt(value);
                             field.onChange(brandId);
                             
-                            // Auto-select ecosystem based on brand
                             const selectedBrand = brands.find(b => b.id === brandId);
                             if (selectedBrand?.ecosystem_id) {
                               form.setValue('ecosystem_id', selectedBrand.ecosystem_id);
-                            } else if (ecosystems.length > 0) {
-                              form.setValue('ecosystem_id', ecosystems[0].ecosystem_id);
                             }
                           }} 
                           value={field.value?.toString()}
@@ -336,21 +287,6 @@ export function ProductFormModal({
                     )}
                   />
 
-                  {/* Description Short */}
-                  <FormField
-                    control={form.control}
-                    name="description_short"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Short Description</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Brief product description" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
                   {/* Credit Hours */}
                   <FormField
                     control={form.control}
@@ -383,6 +319,21 @@ export function ProductFormModal({
                         <FormLabel>Version Name</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., Standard, Premium" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Short Description */}
+                  <FormField
+                    control={form.control}
+                    name="description_short"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Short Description</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Brief product description" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
