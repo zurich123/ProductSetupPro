@@ -66,12 +66,25 @@ export function ProductFormModal({
 
   const createMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      return apiRequest("/api/products", {
+      console.log("Submitting product data:", data);
+      const response = await fetch("/api/products", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error("API Error:", response.status, errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+      
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Product created successfully:", data);
       toast({
         title: "Success",
         description: "Product created successfully",
@@ -82,7 +95,7 @@ export function ProductFormModal({
       console.error("Product creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to create product",
+        description: error.message || "Failed to create product",
         variant: "destructive",
       });
     },
@@ -160,6 +173,9 @@ export function ProductFormModal({
   }, [isOpen, editingProduct, form]);
 
   const onSubmit = (data: ProductFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
+    
     if (isEditing) {
       updateMutation.mutate(data);
     } else {
