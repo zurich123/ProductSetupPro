@@ -3,16 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/layout/navbar";
 import { ProductTable } from "@/components/product-table";
 import { ProductFormModal } from "@/components/product-form-modal";
+import { LearningPathManager } from "@/components/learning-path-manager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Plus, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, BookOpen, BarChart3, Shield } from "lucide-react";
 import type { ProductWithRelations, BrandLookup, Ecosystem } from "@shared/schema";
 
 export default function Products() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithRelations | null>(null);
+  const [isLearningPathOpen, setIsLearningPathOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedEcosystem, setSelectedEcosystem] = useState<string>("");
   const [selectedBrand, setSelectedBrand] = useState<string>("");
@@ -82,9 +85,17 @@ export default function Products() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-3xl font-bold text-gray-900">Product Management</h2>
-              <p className="mt-2 text-gray-600">Create, edit, and manage your product catalog</p>
+              <p className="mt-2 text-gray-600">Create, edit, and manage your product catalog with enhanced compliance and analytics</p>
             </div>
-            <div className="mt-4 sm:mt-0">
+            <div className="mt-4 sm:mt-0 flex gap-3">
+              <Button 
+                onClick={() => setIsLearningPathOpen(true)}
+                variant="outline"
+                className="px-4 py-2"
+              >
+                <BookOpen className="mr-2 h-4 w-4" />
+                Learning Paths
+              </Button>
               <Button 
                 onClick={handleCreateProduct}
                 className="bg-primary hover:bg-blue-700 text-white px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
@@ -94,6 +105,37 @@ export default function Products() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Enhanced Features Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <div>
+                <h3 className="font-semibold">Regulatory Compliance</h3>
+                <p className="text-sm text-gray-600">State-specific approvals and credit tracking</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-green-600" />
+              <div>
+                <h3 className="font-semibold">Analytics & Tracking</h3>
+                <p className="text-sm text-gray-600">User engagement and performance metrics</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-8 w-8 text-purple-600" />
+              <div>
+                <h3 className="font-semibold">Learning Paths</h3>
+                <p className="text-sm text-gray-600">Bundle courses and create learning journeys</p>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Filters */}
@@ -166,6 +208,12 @@ export default function Products() {
           editingProduct={editingProduct}
           brands={brands}
           ecosystems={ecosystems}
+        />
+
+        {/* Learning Path Manager */}
+        <LearningPathManager
+          isOpen={isLearningPathOpen}
+          onClose={() => setIsLearningPathOpen(false)}
         />
       </div>
     </div>

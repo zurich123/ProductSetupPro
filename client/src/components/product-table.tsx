@@ -174,7 +174,10 @@ export function ProductTable({ products, isLoading, onEdit, onRefresh }: Product
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Products</h3>
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Products</h3>
+              <p className="text-sm text-gray-500">Enhanced with compliance tracking and analytics</p>
+            </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">{products.length} products</span>
               <Button variant="ghost" size="icon">
