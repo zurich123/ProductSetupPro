@@ -50,6 +50,11 @@ export interface IStorage {
   getFulfillmentPlatforms(): Promise<FulfillmentPlatform[]>;
   getProductFeatures(): Promise<ProductFeature[]>;
   getLanguages(): Promise<LanguageLookup[]>;
+  
+  // Learning path methods
+  getLearningPaths(): Promise<any[]>;
+  createLearningPath(pathData: any): Promise<any>;
+  addItemToLearningPath(pathId: number, offeringId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -510,6 +515,73 @@ export class DatabaseStorage implements IStorage {
 
   async getLanguages(): Promise<LanguageLookup[]> {
     return await db.select().from(language_lookup);
+  }
+
+  async getLearningPaths(): Promise<any[]> {
+    const paths = await db
+      .select()
+      .from(learning_path)
+      .orderBy(learning_path.created_date);
+    
+    // Get items for each path
+    for (const path of paths) {
+      const items = await db
+        .select({
+          path_item_id: learning_path_item.path_item_id,
+          path_id: learning_path_item.path_id,
+          offering_id: learning_path_item.offering_id,
+          sequence_order: learning_path_item.sequence_order,
+          is_required: learning_path_item.is_required,
+          prerequisite_offering_id: learning_path_item.prerequisite_offering_id,
+          product_name: offering.name,
+          product_sku: offering.sku,
+        })
+        .from(learning_path_item)
+        .leftJoin(offering, eq(learning_path_item.offering_id, offering.offering_id))
+        .where(eq(learning_path_item.path_id, path.path_id))
+        .orderBy(learning_path_item.sequence_order);
+      
+      path.items = items;
+    }
+    
+    return paths;
+  }
+
+  async createLearningPath(pathData: any): Promise<any> {
+    const [newPath] = await db
+      .insert(learning_path)
+      .values({
+        name: pathData.name,
+        description: pathData.description,
+        path_type: pathData.path_type,
+        active: pathData.active ?? true,
+        created_by: 'system', // TODO: Use actual user when auth is implemented
+      })
+      .returning();
+    
+    return { ...newPath, items: [] };
+  }
+
+  async addItemToLearningPath(pathId: number, offeringId: string): Promise<any> {
+    // Get current max sequence order for this path
+    const maxSequence = await db
+      .select({ max: sql<number>`max(${learning_path_item.sequence_order})` })
+      .from(learning_path_item)
+      .where(eq(learning_path_item.path_id, pathId));
+    
+    const nextSequence = (maxSequence[0]?.max || 0) + 1;
+    
+    const [newItem] = await db
+      .insert(learning_path_item)
+      .values({
+        path_id: pathId,
+        offering_id: offeringId,
+        sequence_order: nextSequence,
+        is_required: true,
+      })
+      .returning();
+    
+    return newItem;
   }
 }
 

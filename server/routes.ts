@@ -34,6 +34,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Learning Paths API
+  app.get("/api/learning-paths", async (req, res) => {
+    try {
+      const paths = await storage.getLearningPaths();
+      res.json(paths);
+    } catch (error) {
+      console.error("Error fetching learning paths:", error);
+      res.status(500).json({ message: "Failed to fetch learning paths" });
+    }
+  });
+
+  app.post("/api/learning-paths", async (req, res) => {
+    try {
+      const pathData = req.body;
+      const path = await storage.createLearningPath(pathData);
+      res.status(201).json(path);
+    } catch (error) {
+      console.error("Error creating learning path:", error);
+      res.status(500).json({ message: "Failed to create learning path" });
+    }
+  });
+
+  app.post("/api/learning-paths/:pathId/items", async (req, res) => {
+    try {
+      const { pathId } = req.params;
+      const { offering_id } = req.body;
+      const item = await storage.addItemToLearningPath(parseInt(pathId), offering_id);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error adding item to learning path:", error);
+      res.status(500).json({ message: "Failed to add item to learning path" });
+    }
+  });
+
   // Create new product
   app.post("/api/products", async (req, res) => {
     try {
