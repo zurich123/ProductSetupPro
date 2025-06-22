@@ -47,6 +47,87 @@ export const state_lookup = pgTable("state_lookup", {
   notes: varchar("notes", { length: 512 }),
 });
 
+// State-specific regulatory approval tracking
+export const state_regulatory_approval = pgTable("state_regulatory_approval", {
+  approval_id: serial("approval_id").primaryKey(),
+  sku_version_id: integer("sku_version_id").notNull(),
+  state_id: smallint("state_id").notNull(),
+  approval_date: timestamp("approval_date"),
+  expiration_date: timestamp("expiration_date"),
+  credit_hours_approved: decimal("credit_hours_approved", { precision: 5, scale: 2 }),
+  delivery_methods_approved: varchar("delivery_methods_approved", { length: 255 }),
+  regulatory_body: varchar("regulatory_body", { length: 128 }),
+  approval_number: varchar("approval_number", { length: 64 }),
+  status: varchar("status", { length: 32 }).default('active'),
+  created_date: timestamp("created_date").defaultNow(),
+  modified_date: timestamp("modified_date").defaultNow(),
+  created_by: varchar("created_by", { length: 64 }),
+  modified_by: varchar("modified_by", { length: 64 }),
+});
+
+// Bundle/Learning Path structure
+export const learning_path = pgTable("learning_path", {
+  path_id: serial("path_id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  path_type: varchar("path_type", { length: 64 }), // 'bundle', 'pathway', 'sequence'
+  active: boolean("active").default(true),
+  created_date: timestamp("created_date").defaultNow(),
+  modified_date: timestamp("modified_date").defaultNow(),
+  created_by: varchar("created_by", { length: 64 }),
+  modified_by: varchar("modified_by", { length: 64 }),
+});
+
+// Learning path items (offerings in a path)
+export const learning_path_item = pgTable("learning_path_item", {
+  path_item_id: serial("path_item_id").primaryKey(),
+  path_id: integer("path_id").notNull(),
+  offering_id: uuid("offering_id").notNull(),
+  sequence_order: integer("sequence_order"),
+  is_required: boolean("is_required").default(true),
+  prerequisite_offering_id: uuid("prerequisite_offering_id"),
+});
+
+// User engagement and usage tracking
+export const user_engagement = pgTable("user_engagement", {
+  engagement_id: serial("engagement_id").primaryKey(),
+  user_id: integer("user_id").notNull(),
+  offering_id: uuid("offering_id").notNull(),
+  sku_version_id: integer("sku_version_id"),
+  engagement_type: varchar("engagement_type", { length: 64 }), // 'view', 'start', 'complete', 'purchase'
+  engagement_date: timestamp("engagement_date").defaultNow(),
+  session_duration: integer("session_duration"), // minutes
+  completion_percentage: decimal("completion_percentage", { precision: 5, 2 }),
+  device_type: varchar("device_type", { length: 32 }),
+  platform: varchar("platform", { length: 64 }),
+});
+
+// Marketing performance tracking
+export const marketing_performance = pgTable("marketing_performance", {
+  performance_id: serial("performance_id").primaryKey(),
+  offering_id: uuid("offering_id").notNull(),
+  campaign_id: varchar("campaign_id", { length: 64 }),
+  channel: varchar("channel", { length: 64 }), // 'email', 'social', 'web', 'partner'
+  impressions: integer("impressions"),
+  clicks: integer("clicks"),
+  conversions: integer("conversions"),
+  revenue: decimal("revenue", { precision: 12, scale: 2 }),
+  date_recorded: timestamp("date_recorded").defaultNow(),
+});
+
+// Product usage analytics
+export const product_usage = pgTable("product_usage", {
+  usage_id: serial("usage_id").primaryKey(),
+  offering_id: uuid("offering_id").notNull(),
+  sku_version_id: integer("sku_version_id"),
+  usage_date: timestamp("usage_date").defaultNow(),
+  active_users: integer("active_users"),
+  new_users: integer("new_users"),
+  completion_rate: decimal("completion_rate", { precision: 5, scale: 2 }),
+  average_session_time: integer("average_session_time"), // minutes
+  bounce_rate: decimal("bounce_rate", { precision: 5, scale: 2 }),
+});
+
 // Cost center lookup table
 export const cost_center_lookup = pgTable("cost_center_lookup", {
   id: serial("id").primaryKey(),
@@ -64,6 +145,10 @@ export const offering = pgTable("offering", {
   description_long: text("description_long"),
   not_for_sale: boolean("not_for_sale").default(false),
   sequence_order: smallint("sequence_order"),
+  created_date: timestamp("created_date").defaultNow(),
+  modified_date: timestamp("modified_date").defaultNow(),
+  created_by: varchar("created_by", { length: 64 }),
+  modified_by: varchar("modified_by", { length: 64 }),
 });
 
 // SKU version table
@@ -71,6 +156,10 @@ export const sku_version = pgTable("sku_version", {
   sku_version_id: serial("sku_version_id").primaryKey(),
   offering_id: uuid("offering_id").notNull(),
   version_name: varchar("version_name", { length: 255 }),
+  created_date: timestamp("created_date").defaultNow(),
+  modified_date: timestamp("modified_date").defaultNow(),
+  created_by: varchar("created_by", { length: 64 }),
+  modified_by: varchar("modified_by", { length: 64 }),
 });
 
 // SKU version pricing table (enhanced)
@@ -135,10 +224,19 @@ export const offering_pricing = pgTable("offering_pricing", {
 });
 
 // SKU version state table
+// Enhanced state availability management
 export const sku_version_state = pgTable("sku_version_state", {
   sku_version_state_id: bigint("sku_version_state_id", { mode: "number" }).primaryKey(),
   sku_version_id: integer("sku_version_id"),
   state_id: smallint("state_id"),
+  available: boolean("available").default(true),
+  price_override: decimal("price_override", { precision: 10, scale: 2 }),
+  credit_hours_override: decimal("credit_hours_override", { precision: 5, scale: 2 }),
+  access_restrictions: text("access_restrictions"),
+  effective_date: timestamp("effective_date"),
+  expiration_date: timestamp("expiration_date"),
+  created_date: timestamp("created_date").defaultNow(),
+  modified_date: timestamp("modified_date").defaultNow(),
 });
 
 // Product SKU table (core product information)
