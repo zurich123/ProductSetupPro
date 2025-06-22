@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { productFormSchema, type ProductFormData, type ProductWithRelations, type BrandLookup, type Ecosystem } from "@shared/schema";
 
@@ -89,6 +89,8 @@ export function ProductFormModal({
         title: "Success",
         description: "Product created successfully",
       });
+      // Invalidate and refetch products
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       onClose();
     },
     onError: (error) => {
@@ -103,23 +105,38 @@ export function ProductFormModal({
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      return apiRequest(`/api/products/${editingProduct!.offering_id}`, {
+      console.log("Updating product data:", data);
+      const response = await fetch(`/api/products/${editingProduct!.offering_id}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error("API Error:", response.status, errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+      
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Product updated successfully:", data);
       toast({
         title: "Success",
         description: "Product updated successfully",
       });
+      // Invalidate and refetch products
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       onClose();
     },
     onError: (error) => {
       console.error("Product update error:", error);
       toast({
         title: "Error",
-        description: "Failed to update product",
+        description: error.message || "Failed to update product",
         variant: "destructive",
       });
     },
