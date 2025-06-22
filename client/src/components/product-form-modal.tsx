@@ -102,8 +102,10 @@ export function ProductFormModal({
 
   const createMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      const response = await apiRequest("POST", "/api/products", data);
-      return response.json();
+      return apiRequest("/api/products", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       toast({
@@ -113,6 +115,7 @@ export function ProductFormModal({
       onClose();
     },
     onError: (error) => {
+      console.error("Product creation error:", error);
       toast({
         title: "Error",
         description: "Failed to create product",
@@ -123,8 +126,10 @@ export function ProductFormModal({
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      const response = await apiRequest("PUT", `/api/products/${editingProduct!.offering_id}`, data);
-      return response.json();
+      return apiRequest(`/api/products/${editingProduct!.offering_id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       toast({
@@ -134,6 +139,7 @@ export function ProductFormModal({
       onClose();
     },
     onError: (error) => {
+      console.error("Product update error:", error);
       toast({
         title: "Error",
         description: "Failed to update product",
@@ -235,47 +241,65 @@ export function ProductFormModal({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-md">Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Product Name *</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="basic">Basic Information</TabsTrigger>
+              <TabsTrigger value="regulatory">Regulatory</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
+            </TabsList>
 
-                  <FormField
-                    control={form.control}
-                    name="sku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SKU *</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            <TabsContent value="basic" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Product Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        Product Name
+                        <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter product name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="brand_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Brand * (Ecosystem will be automatically selected)</FormLabel>
+                {/* SKU */}
+                <FormField
+                  control={form.control}
+                  name="sku"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        SKU
+                        <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter SKU" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Brand */}
+                <FormField
+                  control={form.control}
+                  name="brand_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        Brand
+                        <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <div className="text-sm text-gray-600 mb-2">
+                        Ecosystem will be automatically selected based on brand
+                      </div>
                         <Select 
                           onValueChange={(value) => {
                             const brandId = parseInt(value);
