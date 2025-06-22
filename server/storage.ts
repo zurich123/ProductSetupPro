@@ -14,6 +14,8 @@ import {
   brand_lookup, 
   ecosystem, 
   fulfillment_platform,
+  learning_path,
+  learning_path_item,
   type Offering, 
   type InsertOffering,
   type ProductWithRelations,
@@ -28,7 +30,7 @@ import {
   users
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, or } from "drizzle-orm";
+import { eq, ilike, and, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods (existing)
